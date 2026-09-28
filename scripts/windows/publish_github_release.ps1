@@ -12,8 +12,8 @@
 param(
   [string]$Owner = "Chugumoto",
   [string]$Repo = "1Cat-vLLM-4Win",
-  [string]$Tag = "v1.5.1-windows-sm70",
-  [string]$Title = "Windows V100/SM70 MVP wheels (cp312, CUDA 12.8)",
+  [string]$Tag = "v1.5.0.1w",
+  [string]$Title = "Windows V100/SM70 1.5.0.1w wheels (cp312, CUDA 12.8)",
   [switch]$Public
 )
 

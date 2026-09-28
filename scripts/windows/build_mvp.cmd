@@ -36,7 +36,7 @@ if errorlevel 1 (
   echo ERROR: patch.exe not on PATH ^(needed for vllm_flash_attn SM70 patches^)
   exit /b 1
 )
-if not defined VLLM_VERSION_OVERRIDE set "VLLM_VERSION_OVERRIDE=1.5.1.dev0+windows"
+if not defined VLLM_VERSION_OVERRIDE set "VLLM_VERSION_OVERRIDE=1.5.0.1+w"
 
 echo === BUILD 1cat-vllm ===
 python -m pip install . --no-build-isolation -vvv

@@ -16,7 +16,7 @@ This repository (`Chugumoto/1Cat-vLLM-4Win`) is a **Windows port / packaging for
 
 **How to build:** `scripts\windows\run_build_mvp.cmd` (after `env_build.cmd` / preflight). Details below.
 
-**Runtime wheels (example release):** [v1.5.1-windows-sm70](https://github.com/Chugumoto/1Cat-vLLM-4Win/releases/tag/v1.5.1-windows-sm70) — `vllm-*-win_amd64.whl`, `flash_attn_v100-*-win_amd64.whl`.
+**Runtime wheels (example release):** [v1.5.0.1w](https://github.com/Chugumoto/1Cat-vLLM-4Win/releases/tag/v1.5.0.1w) — `vllm-*-win_amd64.whl`, `flash_attn_v100-*-win_amd64.whl` (scheme: `1.5.0w` = clean 1Cat 1.5.0 Windows port; `1.5.0.1w` = patched).
 
 **Limits (this fork’s gates):** **1× GPU only** — no TP / NCCL in Windows MVP gates. Upstream Linux headlines that use 4× TP4 are **context only**.
 
