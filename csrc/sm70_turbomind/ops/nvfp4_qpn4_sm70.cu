@@ -1109,6 +1109,48 @@ void nvfp4_qpn4_gated_scale_code_sm70_out(
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 
+namespace {
+
+// Prefer the measured Qwen3.8 dense split (17) when it divides K/16 so
+// existing 27B shapes keep their tuned path; otherwise fall through the
+// remaining instantiated splits so other widths (e.g. Coder-32B
+// intermediate=27648) still decode on SM70.
+int64_t pick_qpn4_dense_split_k(int64_t k) {
+  TORCH_CHECK(k > 0 && (k % 16) == 0,
+              "nvfp4_qpn4_dispatch_sm70_out: K must be a positive multiple of "
+              "16");
+  const int64_t groups = k / 16;
+  static constexpr int64_t kCandidates[] = {17, 16, 10, 8, 4};
+  for (int64_t split_k : kCandidates) {
+    if ((groups % split_k) == 0) {
+      return split_k;
+    }
+  }
+  TORCH_CHECK(false,
+              "nvfp4_qpn4_dispatch_sm70_out: no supported dense split_k for K=",
+              k);
+}
+
+// Gated kernels do not instantiate split_k=17. Prefer the measured gated
+// split (8); any K that already passes %128 alignment admits 8.
+int64_t pick_qpn4_gated_split_k(int64_t k) {
+  TORCH_CHECK(k > 0 && (k % 16) == 0,
+              "nvfp4_qpn4_dispatch_sm70_out: K must be a positive multiple of "
+              "16");
+  const int64_t groups = k / 16;
+  static constexpr int64_t kCandidates[] = {8, 16, 10, 4};
+  for (int64_t split_k : kCandidates) {
+    if ((groups % split_k) == 0) {
+      return split_k;
+    }
+  }
+  TORCH_CHECK(false,
+              "nvfp4_qpn4_dispatch_sm70_out: no supported gated split_k for K=",
+              k);
+}
+
+}  // namespace
+
 void nvfp4_qpn4_dispatch_sm70_out(torch::Tensor out, int64_t dense_weight_ptr,
                                   torch::Tensor input, torch::Tensor codes,
                                   torch::Tensor scales, double global_scale,
@@ -1116,16 +1158,20 @@ void nvfp4_qpn4_dispatch_sm70_out(torch::Tensor out, int64_t dense_weight_ptr,
   // Keep the dynamic-M decision inside the opaque operator so one compiled
   // graph can safely serve both M=1 decode and large-M prefill.
   if (input.size(0) == 1) {
+    const int64_t k = input.size(1);
     if (gated_silu) {
       TORCH_CHECK(use_scale_code,
                   "QPN4 gated decode requires E4M3 scale codes");
-      nvfp4_qpn4_gated_scale_code_sm70_out(out, input, codes, scales,
-                                           global_scale, 8, 2, false);
+      nvfp4_qpn4_gated_scale_code_sm70_out(
+          out, input, codes, scales, global_scale, pick_qpn4_gated_split_k(k),
+          2, false);
     } else if (use_scale_code) {
-      nvfp4_qpn4_gemm_scale_code_sm70_out(out, input, codes, scales,
-                                          global_scale, 17, 1, false);
+      nvfp4_qpn4_gemm_scale_code_sm70_out(
+          out, input, codes, scales, global_scale, pick_qpn4_dense_split_k(k),
+          1, false);
     } else {
-      nvfp4_qpn4_gemm_sm70_out(out, input, codes, scales, 17, 1, false);
+      nvfp4_qpn4_gemm_sm70_out(out, input, codes, scales,
+                               pick_qpn4_dense_split_k(k), 1, false);
     }
     return;
   }

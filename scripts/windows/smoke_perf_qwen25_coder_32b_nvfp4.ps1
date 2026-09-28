@@ -87,6 +87,7 @@ $argsList = @(
   "--gpu-memory-utilization", $util,
   "--max-num-seqs", "1",
   "--attention-backend", "FLASH_ATTN_V100",
+  "--enforce-eager",
   "--trust-remote-code",
   "--limit-mm-per-prompt", '{"image":0,"video":0}'
 )

@@ -178,13 +178,13 @@ First MTP-2 green (floor=0): **64.526** tok/s — `perf_qwen36_35b_a3b_awq_20260
 - Soft floor **N35nv**: **68** (= `floor(0.7 × 97.454)`)
 - Soft floor **Nmtp1nv**: **42** (= `floor(0.7 × 60.559)`)
 - Soft floor **Nmtp4nv**: **48** (= `floor(0.7 × 69.242)`)
-- Local weights (curl; HF Xet hung): `C:\Users\Chugumoto\.cache\huggingface\hub\models--nvidia--Qwen3.6-35B-A3B-NVFP4\manual`
+- Local weights (if Hub/Xet stalls): curl into `%USERPROFILE%\.cache\huggingface\hub\models--nvidia--Qwen3.6-35B-A3B-NVFP4\manual` via `scripts\windows\_prefetch_35b_nvfp4_curl.cmd`
 
 #### Baseline
 
 ```bat
 set HF_HUB_DISABLE_XET=1
-set VLLM_PERF_MODEL=C:\Users\Chugumoto\.cache\huggingface\hub\models--nvidia--Qwen3.6-35B-A3B-NVFP4\manual
+set VLLM_PERF_MODEL=%USERPROFILE%\.cache\huggingface\hub\models--nvidia--Qwen3.6-35B-A3B-NVFP4\manual
 set VLLM_PERF_TOK_S_FLOOR=68
 scripts\windows\smoke_perf_qwen36_35b_a3b_nvfp4.cmd
 ```
@@ -193,7 +193,7 @@ First green (floor=0): **97.454** tok/s — `perf_qwen36_35b_a3b_nvfp4_20260928-
 #### MTP-1
 
 ```bat
-set VLLM_PERF_MODEL=C:\Users\Chugumoto\.cache\huggingface\hub\models--nvidia--Qwen3.6-35B-A3B-NVFP4\manual
+set VLLM_PERF_MODEL=%USERPROFILE%\.cache\huggingface\hub\models--nvidia--Qwen3.6-35B-A3B-NVFP4\manual
 set VLLM_PERF_ENABLE_MTP=1
 set VLLM_PERF_MTP_NUM_TOKENS=1
 set VLLM_PERF_TOK_S_FLOOR=42
@@ -205,7 +205,7 @@ First MTP-1 green (floor=0): **60.559** tok/s — `perf_qwen36_35b_a3b_nvfp4_202
 #### MTP-4 (table-comparable k; not 4× TP4 parity)
 
 ```bat
-set VLLM_PERF_MODEL=C:\Users\Chugumoto\.cache\huggingface\hub\models--nvidia--Qwen3.6-35B-A3B-NVFP4\manual
+set VLLM_PERF_MODEL=%USERPROFILE%\.cache\huggingface\hub\models--nvidia--Qwen3.6-35B-A3B-NVFP4\manual
 set VLLM_PERF_ENABLE_MTP=1
 set VLLM_PERF_MTP_NUM_TOKENS=4
 set VLLM_PERF_TOK_S_FLOOR=48
@@ -225,36 +225,46 @@ First MTP-4 green (floor=0): **69.242** tok/s — `perf_qwen36_35b_a3b_nvfp4_202
 | Qwen3.6-35B-A3B-NVFP4 MTP-1 | 60.559 | Nmtp1nv=42 | TBD | Slower than NVFP4 baseline (like AWQ MTP-1) |
 | Qwen3.6-35B-A3B-NVFP4 MTP-4 | 69.242 | Nmtp4nv=48 | TBD | Better than MTP-1; still &lt; no-MTP; not 4×174 |
 
-## Gate 4 — Qwen2.5-Coder-32B (coding canary; prefer NVFP4)
+## Gate 4 — Qwen2.5-Coder-32B (coding canary)
 
-### Phase 4a — NVFP4 (community compressed-tensors)
+### Phase 4a — NVFP4 (QPN4 split_k by K)
 
-- Model: `drawais/Qwen2.5-Coder-32B-Instruct-NVFP4` (~20.7GB; `nvfp4-pack-quantized`)
-- **Not** an official `nvidia/` ModelOpt Coder-32B (none found). Fallback AWQ: `Qwen/Qwen2.5-Coder-32B-Instruct-AWQ`
-- Script: `scripts/windows/smoke_perf_qwen25_coder_32b_nvfp4.cmd`
+- HF id: `drawais/Qwen2.5-Coder-32B-Instruct-NVFP4` (~20.7GB on disk; fits 1×32GB)
+- **No** official `nvidia/` / ModelOpt Coder-32B-Instruct NVFP4 found (nvidia has other Qwen NVFP4s, not this Coder-32B)
+- Prefetch: DONE via `_prefetch_qwen25_coder_32b_nvfp4_curl.cmd`
+- Soft floor **Ncodernv** = floor(0.7 × 18.007) = **12**
+- Pre-fix: warmup FAIL `invalid split_k for K` (hard-coded QPN4 `split_k=17`; Coder `intermediate=27648` not divisible by 272)
+- Fix: `pick_qpn4_dense_split_k` / `pick_qpn4_gated_split_k` in `csrc/sm70_turbomind/ops/nvfp4_qpn4_sm70.cu`
+- Post-rebuild green (2026-09-28): **18.007** tok/s — `perf_qwen25_coder_32b_nvfp4_20260928-164201.json`
+- Note: slower than official AWQ on this host (~28.4); use AWQ when decode speed matters more than NVFP4 footprint
+
+```bat
+set HF_HUB_DISABLE_XET=1
+set VLLM_PERF_TOK_S_FLOOR=12
+set VLLM_PERF_MODEL=%USERPROFILE%\.cache\huggingface\hub\models--drawais--Qwen2.5-Coder-32B-Instruct-NVFP4\manual
+scripts\windows\smoke_perf_qwen25_coder_32b_nvfp4.cmd
+```
+
+### Phase 4b — AWQ (faster decode path)
+
+- Model / script: `Qwen/Qwen2.5-Coder-32B-Instruct-AWQ` / `smoke_perf_qwen25_coder_32b_awq.cmd`
 - Port: 8006
-- Soft floor **Ncoder**: _TBD after baseline green_
-- Prefetch: `scripts\windows\_prefetch_qwen25_coder_32b_nvfp4_curl.cmd` → local `...\manual`
-- Risk: community checkpoint on SM70; if serve fails, fall back to official AWQ scripts
+- Soft floor **Ncoder** = floor(0.7 × 28.392) = **19**
+- Prefetch: `_prefetch_qwen25_coder_32b_awq_curl.cmd` DONE (~18.0GB local `...\manual`)
 
 #### Baseline
 
 ```bat
 set HF_HUB_DISABLE_XET=1
 set VLLM_PERF_TOK_S_FLOOR=0
-set VLLM_PERF_MODEL=C:\Users\Chugumoto\.cache\huggingface\hub\models--drawais--Qwen2.5-Coder-32B-Instruct-NVFP4\manual
-scripts\windows\smoke_perf_qwen25_coder_32b_nvfp4.cmd
+set VLLM_PERF_MODEL=%USERPROFILE%\.cache\huggingface\hub\models--Qwen--Qwen2.5-Coder-32B-Instruct-AWQ\manual
+scripts\windows\smoke_perf_qwen25_coder_32b_awq.cmd
 ```
-
-### Phase 4b — AWQ fallback (official Qwen)
-
-- Model / script: `Qwen/Qwen2.5-Coder-32B-Instruct-AWQ` / `smoke_perf_qwen25_coder_32b_awq.cmd`
-- Prefetch: `_prefetch_qwen25_coder_32b_awq_curl.cmd` (paused when switching to NVFP4)
 
 ### Gate 4 summary
 
 | Profile | tok/s | Floor | Quality | Notes |
 |---|---:|---|---|---|
-| Qwen2.5-Coder-32B-Instruct-NVFP4 | TBD | Ncoder=TBD | TBD | drawais community; ~21GB; 1×32GB |
-| Qwen2.5-Coder-32B-Instruct-AWQ | TBD | TBD | TBD | Official Qwen AWQ fallback |
+| Qwen2.5-Coder-32B-Instruct-NVFP4 | 18.007 | Ncodernv=12 | TBD | Post `split_k`-by-K rebuild; slower than AWQ |
+| Qwen2.5-Coder-32B-Instruct-AWQ | 28.392 | Ncoder=19 | TBD | Official Qwen AWQ; faster decode on 1×V100 |
 

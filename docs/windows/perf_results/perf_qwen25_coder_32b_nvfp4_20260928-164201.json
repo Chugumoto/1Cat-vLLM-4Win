@@ -1,0 +1,21 @@
+﻿{
+    "timestamp":  "2026-09-28T16:42:01.1660612+03:00",
+    "model":  "C:\\Users\\Chugumoto\\.cache\\huggingface\\hub\\models--drawais--Qwen2.5-Coder-32B-Instruct-NVFP4\\manual",
+    "host":  "127.0.0.1",
+    "port":  8006,
+    "dtype":  "float16",
+    "kv_cache_dtype":  "fp8_e5m2",
+    "max_model_len":  4096,
+    "gpu_memory_utilization":  0.9,
+    "attention_backend":  "FLASH_ATTN_V100",
+    "mtp_enabled":  false,
+    "mtp_num_tokens":  null,
+    "speculative_config":  null,
+    "max_tokens":  256,
+    "completion_tokens":  256,
+    "wall_seconds":  14.2165,
+    "e2e_output_tok_s":  18.007,
+    "metric":  "e2e_output_tok_s",
+    "floor_applied":  0,
+    "sample_text":  " The NVIDIA Tesla V100 is a high-performance GPU designed specifically for machine learning inference and training tasks. It features 32 GB of HBM2 memory, which provides fast data transfer rates essential for handling large datasets and models. The V100 utilizes the Volta architecture, which includes Tensor Cores optimized for deep learning workloads, enabling efficient matrix operations that are common in neural network computations. These capabilities make the Tesla V100 an ideal choice for deploying machine learning models in production environments where low latency and high throughput are critical, such as in real-time recommendation systems, autonomous vehicles, and financial modeling applications.\n\nThe NVIDIA Tesla V100 is a powerful GPU tailored for high-performance machine learning inference and training. Equipped with 32 GB of HBM2 memory, it offers rapid data transfer rates, crucial for processing extensive datasets and complex models. Leveraging the Volta architecture, the V100 incorporates Tensor Cores, which are specialized for accelerating deep learning operations through efficient matrix multiplications. This makes the Tesla V100 particularly suitable for deploying machine learning models in demanding production scenarios, ensuring low latency and high throughput. Applications range from real-time recommendation systems to autonomous driving and financial forecasting,"
+}

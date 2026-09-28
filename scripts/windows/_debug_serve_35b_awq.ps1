@@ -13,7 +13,7 @@ $env:CUDA_VISIBLE_DEVICES = "0"
 $env:PYTHONUTF8 = "1"
 $env:PYTHONIOENCODING = "utf-8"
 
-$repoRoot = "C:\Users\Chugumoto\Projects\1Cat-vLLM-4Win"
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $log = Join-Path $repoRoot "docs\windows\perf_results\serve_debug_35b_awq_psi_$stamp.log"
 

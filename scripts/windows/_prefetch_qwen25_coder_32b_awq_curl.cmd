@@ -1,10 +1,10 @@
 @echo off
 setlocal EnableDelayedExpansion
 REM Official AWQ (~19GB). Prefer curl if HF Xet stalls.
-set "DEST=C:\Users\Chugumoto\.cache\huggingface\hub\models--Qwen--Qwen2.5-Coder-32B-Instruct-AWQ\manual"
+set "DEST=%USERPROFILE%\.cache\huggingface\hub\models--Qwen--Qwen2.5-Coder-32B-Instruct-AWQ\manual"
 mkdir "%DEST%" 2>nul
 set "BASE=https://huggingface.co/Qwen/Qwen2.5-Coder-32B-Instruct-AWQ/resolve/main"
-set "LOG=C:\Users\Chugumoto\Projects\1Cat-vLLM-4Win\docs\windows\perf_results\hf_download_qwen25_coder_32b_awq_curl.log"
+set "LOG=%~dp0..\..\docs\windows\perf_results\hf_download_qwen25_coder_32b_awq_curl.log"
 
 echo DEST=%DEST% > "%LOG%"
 

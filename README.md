@@ -1,7 +1,8 @@
 <!-- markdownlint-disable MD041 -->
 
-> **Windows + Tesla V100:** see [README.windows.md](README.windows.md).
+> **Windows + Tesla V100 (this fork):** see **[README.windows.md](README.windows.md)** — provenance, build pins, and **measured 1× V100 gate speeds** (9B / 27B / 35B-A3B / Coder-32B).
 > Requires CUDA 12.8 (CUDA 13 dropped Volta/SM70).
+> Detailed gate runbook: [docs/windows/PERF_GATE.md](docs/windows/PERF_GATE.md).
 
 <p align="center">
   <img src="./assets/1cat-vllm-logo.png" alt="1Cat-vLLM logo" width="420">
@@ -18,7 +19,9 @@
 >RadixArk/Qwen3.8-Flash-Next-NVFP4
 >incoai/Qwen3.8-27B-DFlash2
 
-<strong>4× Tesla V100 16GB · Qwen3.8-27B-NVFP4 + DFlash2 · ≈260 tok/s</strong>
+<strong>Upstream Linux headline (not this Windows fork’s gate): 4× Tesla V100 · TP4 · Qwen3.8-27B-NVFP4 + DFlash2 · ≈260 tok/s</strong>
+
+> **Windows 1× V100 (this repo):** best measured decode here ≈ **97.5 tok/s** (`nvidia/Qwen3.6-35B-A3B-NVFP4`, no MTP). Full table → [README.windows.md](README.windows.md).
 
 > Tesla V100 was released in 2017.
 >

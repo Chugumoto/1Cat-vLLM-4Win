@@ -1,0 +1,20 @@
+﻿{
+    "timestamp":  "2026-09-28T15:26:00.9318262+03:00",
+    "model":  "C:\\Users\\Chugumoto\\.cache\\huggingface\\hub\\models--Qwen--Qwen2.5-Coder-32B-Instruct-AWQ\\manual",
+    "host":  "127.0.0.1",
+    "port":  8006,
+    "dtype":  "float16",
+    "kv_cache_dtype":  "fp8_e5m2",
+    "max_model_len":  4096,
+    "gpu_memory_utilization":  0.9,
+    "mtp_enabled":  false,
+    "mtp_num_tokens":  null,
+    "speculative_config":  null,
+    "max_tokens":  256,
+    "completion_tokens":  256,
+    "wall_seconds":  9.0168,
+    "e2e_output_tok_s":  28.392,
+    "metric":  "e2e_output_tok_s",
+    "floor_applied":  0,
+    "sample_text":  " The NVIDIA Tesla V100 is a high-performance GPU designed specifically for data centers and cloud computing environments. In the context of machine learning inference, the Tesla V100 excels due to its advanced architecture, which includes 5,120 CUDA cores and 640 Tensor Cores, enabling it to handle complex computations required for deep learning models with exceptional speed and efficiency. Its 32 GB of HBM2 memory provides ample storage for large datasets and models, ensuring smooth operation during inference tasks. Additionally, the Tesla V100 supports mixed-precision training and inference, which further optimizes performance by utilizing both FP16 and FP32 data types, making it an ideal choice for deploying machine learning models in production environments where low latency and high throughput are critical.\n\nThe NVIDIA Tesla V100 is a powerful GPU tailored for data centers and cloud computing, particularly suited for machine learning inference. Its architecture, featuring 5,120 CUDA cores and 640 Tensor Cores, allows it to process intricate computations needed for deep learning models at remarkable speeds. With 32 GB of HBM2 memory, it efficiently manages large datasets and models, ensuring seamless performance during inference."
+}

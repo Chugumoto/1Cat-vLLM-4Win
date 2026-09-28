@@ -3,6 +3,9 @@ triton-windows
 portalocker
 # Windows reports platform_machine=AMD64; common.txt markers use x86_64 and skip these.
 llguidance >= 1.7.0, < 1.8.0
-xgrammar >= 0.2.0, < 1.0.0
+# Win wheels: 0.2.7 + apache-tvm-ffi==0.1.10 (cuda.txt pin) fail to load
+# xgrammar_bindings.dll; keep the known-good pair used by this MVP.
+xgrammar == 0.2.8
+apache-tvm-ffi == 0.1.14.post1
 # xformers: install a Torch-2.10-compatible Windows wheel if needed for the chosen attention path.
 # Do not blindly pin SystemPanic's 0.0.35 if it requires newer torch.

@@ -1,10 +1,10 @@
 @echo off
 setlocal EnableDelayedExpansion
 REM Community compressed-tensors NVFP4 (~20.7GB). Official nvidia/ Coder-32B NVFP4 not found.
-set "DEST=C:\Users\Chugumoto\.cache\huggingface\hub\models--drawais--Qwen2.5-Coder-32B-Instruct-NVFP4\manual"
+set "DEST=%USERPROFILE%\.cache\huggingface\hub\models--drawais--Qwen2.5-Coder-32B-Instruct-NVFP4\manual"
 mkdir "%DEST%" 2>nul
 set "BASE=https://huggingface.co/drawais/Qwen2.5-Coder-32B-Instruct-NVFP4/resolve/main"
-set "LOG=C:\Users\Chugumoto\Projects\1Cat-vLLM-4Win\docs\windows\perf_results\hf_download_qwen25_coder_32b_nvfp4_curl.log"
+set "LOG=%~dp0..\..\docs\windows\perf_results\hf_download_qwen25_coder_32b_nvfp4_curl.log"
 
 echo DEST=%DEST% > "%LOG%"
 

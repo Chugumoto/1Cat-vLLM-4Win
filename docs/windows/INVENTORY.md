@@ -60,9 +60,9 @@ Checklist for porting Windows build support into the 1Cat V100 (CUDA 12.8 / SM70
 ## Raw scan command (repeatable)
 
 ```powershell
-Set-Location C:\Users\Chugumoto\Projects\1Cat-vLLM-4Win
+Set-Location <repo-root>
 git grep -n -i "WIN32\|IS_WINDOWS\|windows.txt\|fix_cutlass_msvc\|VLLM_FORCE_FA3" `
   windows-ref/vllm-for-windows -- setup.py CMakeLists.txt cmake requirements vllm/envs.py
 ```
 
-Fallback probe clone: `C:\Users\Chugumoto\Projects\_tmp_fork_probe\win`.
+Fallback probe clone: local read-only clone of `SystemPanic/vllm-windows` (`vllm-for-windows` branch).
