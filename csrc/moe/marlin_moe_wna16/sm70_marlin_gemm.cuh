@@ -3042,17 +3042,17 @@ torch::Tensor launch_sm70_marlin_moe_gemm(
   auto const* b_zeros_ptr =
       reinterpret_cast<typename Spec::ZeroElement const*>(b_zeros.data_ptr());
   float const* global_scale_ptr =
-      global_scale.numel() == 0 ? nullptr : global_scale.data_ptr<float>();
+      global_scale.numel() == 0 ? nullptr : global_scale.template data_ptr<float>();
 
   if (requested_split_k == 1) {
     kernel<<<grid, block, smem_bytes, stream>>>(
-        reinterpret_cast<cutlass::half_t const*>(a.data_ptr<at::Half>()),
-        reinterpret_cast<uint32_t const*>(b_q_weight.data_ptr<int32_t>()),
+        reinterpret_cast<cutlass::half_t const*>(a.template data_ptr<at::Half>()),
+        reinterpret_cast<uint32_t const*>(b_q_weight.template data_ptr<int32_t>()),
         b_scales_ptr, b_zeros_ptr, global_scale_ptr,
-        reinterpret_cast<cutlass::half_t*>(c.data_ptr<at::Half>()),
-        sorted_token_ids.data_ptr<int32_t>(), expert_ids.data_ptr<int32_t>(),
-        num_tokens_past_padded.data_ptr<int32_t>(),
-        topk_weights.data_ptr<float>(), int(moe_block_size), int(top_k),
+        reinterpret_cast<cutlass::half_t*>(c.template data_ptr<at::Half>()),
+        sorted_token_ids.template data_ptr<int32_t>(), expert_ids.template data_ptr<int32_t>(),
+        num_tokens_past_padded.template data_ptr<int32_t>(),
+        topk_weights.template data_ptr<float>(), int(moe_block_size), int(top_k),
         mul_topk_weights, int(size_m), int(size_n), int(size_k),
         int(a.stride(0)), requested_split_k);
     C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -3068,7 +3068,7 @@ torch::Tensor launch_sm70_marlin_moe_gemm(
   smem_bytes = configure_sm70_dynamic_smem<SharedStorage>(split_kernel);
 
   int64_t const numel = size_m * top_k * size_n;
-  C10_CUDA_CHECK(cudaMemsetAsync(c.data_ptr<at::Half>(), 0,
+  C10_CUDA_CHECK(cudaMemsetAsync(c.template data_ptr<at::Half>(), 0,
                                  static_cast<size_t>(numel) * sizeof(at::Half),
                                  stream));
 
@@ -3076,13 +3076,13 @@ torch::Tensor launch_sm70_marlin_moe_gemm(
       sm70_active_split_k(static_cast<int>(size_k), requested_split_k, CtaK);
   grid.z = static_cast<unsigned>(active_split_k);
   split_kernel<<<grid, block, smem_bytes, stream>>>(
-      reinterpret_cast<cutlass::half_t const*>(a.data_ptr<at::Half>()),
-      reinterpret_cast<uint32_t const*>(b_q_weight.data_ptr<int32_t>()),
+      reinterpret_cast<cutlass::half_t const*>(a.template data_ptr<at::Half>()),
+      reinterpret_cast<uint32_t const*>(b_q_weight.template data_ptr<int32_t>()),
       b_scales_ptr, b_zeros_ptr, global_scale_ptr,
-      reinterpret_cast<cutlass::half_t*>(c.data_ptr<at::Half>()),
-      sorted_token_ids.data_ptr<int32_t>(), expert_ids.data_ptr<int32_t>(),
-      num_tokens_past_padded.data_ptr<int32_t>(),
-      topk_weights.data_ptr<float>(), int(moe_block_size), int(top_k),
+      reinterpret_cast<cutlass::half_t*>(c.template data_ptr<at::Half>()),
+      sorted_token_ids.template data_ptr<int32_t>(), expert_ids.template data_ptr<int32_t>(),
+      num_tokens_past_padded.template data_ptr<int32_t>(),
+      topk_weights.template data_ptr<float>(), int(moe_block_size), int(top_k),
       mul_topk_weights, int(size_m), int(size_n), int(size_k), int(a.stride(0)),
       requested_split_k);
   C10_CUDA_KERNEL_LAUNCH_CHECK();

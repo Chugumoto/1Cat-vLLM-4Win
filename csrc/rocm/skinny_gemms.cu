@@ -1800,8 +1800,8 @@ torch::Tensor wvSplitKrc(const at::Tensor& in_a, const at::Tensor& in_b,
           128 * 1024 * (_DTRMNSTC ? 12 : 1) / 4,
           torch::TensorOptions().dtype(torch::kInt).device(in_a.device()))
           .detach();
-  auto glbl = axl_glbl.data_ptr<float>();
-  auto cntr = axl_cntr.data_ptr<int>();
+  auto glbl = axl_glbl.template data_ptr<float>();
+  auto cntr = axl_cntr.template data_ptr<int>();
 
 #define WVSPLITKrc(_N, _GrpsShrB, _CHUNKK)                                     \
   {                                                                            \
@@ -2297,11 +2297,11 @@ void wvSplitKQ(const at::Tensor& in_b, const at::Tensor& in_a,
   AT_DISPATCH_REDUCED_FLOATING_TYPES(out_c.scalar_type(), "wvSplitKQ", [&] {
     using fptype = typename scalar<scalar_t>::type;
     auto c_ptr = reinterpret_cast<fptype*>(out_c.data_ptr());
-    auto s_a = scale_a.data_ptr<float>();
-    auto s_b = scale_b.data_ptr<float>();
+    auto s_a = scale_a.template data_ptr<float>();
+    auto s_b = scale_b.template data_ptr<float>();
     VLLM_DISPATCH_FP8_TYPES(in_a.scalar_type(), "wvSplitKQ", [&] {
-      auto a_ptr = in_a.data_ptr<fp8_t>();
-      auto b_ptr = in_b.data_ptr<fp8_t>();
+      auto a_ptr = in_a.template data_ptr<fp8_t>();
+      auto b_ptr = in_b.template data_ptr<fp8_t>();
       auto bias_ptr = (in_bias.has_value() && in_bias->numel() > 0)
                           ? reinterpret_cast<fptype*>(in_bias->data_ptr())
                           : nullptr;

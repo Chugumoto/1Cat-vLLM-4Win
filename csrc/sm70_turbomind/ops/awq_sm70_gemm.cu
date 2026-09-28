@@ -1505,7 +1505,7 @@ WorkspaceHolder& get_workspace(int device, cudaStream_t stream) {
   holder.workspace.partials_size = holder.partials.numel();
   holder.workspace.tensormaps = holder.tensormaps.data_ptr();
   holder.workspace.tensormaps_size = holder.tensormaps.numel();
-  holder.workspace.flags = holder.flags.data_ptr<int>();
+  holder.workspace.flags = holder.flags.template data_ptr<int>();
 
   std::lock_guard<std::mutex> lock(workspace_mutex);
   auto [insert_it, _] = workspace_cache.emplace(key, std::move(holder));
@@ -2239,12 +2239,12 @@ void sm70_glm_mhc_pre_norm_out(
 #define VLLM_LAUNCH_GLM_MHC_PRE(threads)                                       \
   sm70_glm_mhc_pre_norm_kernel<4096, 4, threads>                               \
       <<<num_tokens, threads, 0, at::cuda::getCurrentCUDAStream()>>>(          \
-          gemm_mul.data_ptr<float>(), gemm_sqrsum.data_ptr<float>(),           \
-          hc_scale.data_ptr<float>(), hc_base.data_ptr<float>(),               \
-          reinterpret_cast<const half*>(residual.data_ptr<at::Half>()),        \
-          post_mix.data_ptr<float>(), comb_mix.data_ptr<float>(),              \
-          reinterpret_cast<half*>(layer_input.data_ptr<at::Half>()),           \
-          reinterpret_cast<const half*>(norm_weight.data_ptr<at::Half>()),     \
+          gemm_mul.template data_ptr<float>(), gemm_sqrsum.template data_ptr<float>(),           \
+          hc_scale.template data_ptr<float>(), hc_base.template data_ptr<float>(),               \
+          reinterpret_cast<const half*>(residual.template data_ptr<at::Half>()),        \
+          post_mix.template data_ptr<float>(), comb_mix.template data_ptr<float>(),              \
+          reinterpret_cast<half*>(layer_input.template data_ptr<at::Half>()),           \
+          reinterpret_cast<const half*>(norm_weight.template data_ptr<at::Half>()),     \
           static_cast<int>(num_splits), static_cast<int>(num_tokens),          \
           static_cast<float>(rms_eps), static_cast<float>(hc_pre_eps),         \
           static_cast<float>(hc_sinkhorn_eps),                                 \
@@ -2317,13 +2317,13 @@ void sm70_glm_mhc_post_dot_q8_out(torch::Tensor residual_out,
   const auto stream = at::cuda::getCurrentCUDAStream();
 #define VLLM_LAUNCH_GLM_MHC_POST_DOT(tile)                          \
   sm70_glm_mhc_post_dot_q8_kernel<tile><<<grid, 256, 0, stream>>>(  \
-      reinterpret_cast<half*>(residual_out.data_ptr<at::Half>()),   \
-      gemm_mul.data_ptr<float>(), gemm_sqrsum.data_ptr<float>(),    \
-      comb_mix.data_ptr<float>(),                                   \
-      reinterpret_cast<const half*>(residual.data_ptr<at::Half>()), \
-      post_mix.data_ptr<float>(),                                   \
-      reinterpret_cast<const half*>(x.data_ptr<at::Half>()),        \
-      weight.data_ptr<float>())
+      reinterpret_cast<half*>(residual_out.template data_ptr<at::Half>()),   \
+      gemm_mul.template data_ptr<float>(), gemm_sqrsum.template data_ptr<float>(),    \
+      comb_mix.template data_ptr<float>(),                                   \
+      reinterpret_cast<const half*>(residual.template data_ptr<at::Half>()), \
+      post_mix.template data_ptr<float>(),                                   \
+      reinterpret_cast<const half*>(x.template data_ptr<at::Half>()),        \
+      weight.template data_ptr<float>())
   switch (tile_n) {
     case 6:
       VLLM_LAUNCH_GLM_MHC_POST_DOT(6);
@@ -2377,16 +2377,16 @@ void sm70_glm_kda_fg_b_out(torch::Tensor f_out, torch::Tensor g_out,
 
   const at::cuda::OptionalCUDAGuard device_guard(device_of(f_out));
   const auto stream = at::cuda::getCurrentCUDAStream();
-  auto* f_out_ptr = reinterpret_cast<half*>(f_out.data_ptr<at::Half>());
-  auto* g_out_ptr = reinterpret_cast<half*>(g_out.data_ptr<at::Half>());
+  auto* f_out_ptr = reinterpret_cast<half*>(f_out.template data_ptr<at::Half>());
+  auto* g_out_ptr = reinterpret_cast<half*>(g_out.template data_ptr<at::Half>());
   const auto* f_input_ptr =
-      reinterpret_cast<const half*>(f_input.data_ptr<at::Half>());
+      reinterpret_cast<const half*>(f_input.template data_ptr<at::Half>());
   const auto* g_input_ptr =
-      reinterpret_cast<const half*>(g_input.data_ptr<at::Half>());
+      reinterpret_cast<const half*>(g_input.template data_ptr<at::Half>());
   const auto* f_weight_ptr =
-      reinterpret_cast<const half*>(f_weight.data_ptr<at::Half>());
+      reinterpret_cast<const half*>(f_weight.template data_ptr<at::Half>());
   const auto* g_weight_ptr =
-      reinterpret_cast<const half*>(g_weight.data_ptr<at::Half>());
+      reinterpret_cast<const half*>(g_weight.template data_ptr<at::Half>());
   if (output_rows == 1024) {
     launch_sm70_glm_kda_fg_b<1024>(
         f_out_ptr, g_out_ptr, f_input_ptr, g_input_ptr, f_weight_ptr,
@@ -3021,8 +3021,8 @@ void awq_sm70_dequantize_out(torch::Tensor output, torch::Tensor packed_weight,
                                       kAwqPrefillDequantThreads);
   awq_sm70_dequantize_kernel<<<blocks, kAwqPrefillDequantThreads, 0,
                                at::cuda::getCurrentCUDAStream()>>>(
-      reinterpret_cast<__half*>(output.data_ptr<at::Half>()),
-      packed_weight.data_ptr<int32_t>(), packed_scales.data_ptr<int32_t>(),
+      reinterpret_cast<__half*>(output.template data_ptr<at::Half>()),
+      packed_weight.template data_ptr<int32_t>(), packed_scales.template data_ptr<int32_t>(),
       static_cast<int>(k), static_cast<int>(n), static_cast<int>(group_size));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
@@ -3120,9 +3120,9 @@ void fp8_sm70_dequantize_out(torch::Tensor output, torch::Tensor packed_weight,
                                       kFp8PrefillDequantThreads);
   fp8_sm70_dequantize_kernel<<<blocks, kFp8PrefillDequantThreads, 0,
                                at::cuda::getCurrentCUDAStream()>>>(
-      reinterpret_cast<__half*>(output.data_ptr<at::Half>()),
-      packed_weight.data_ptr<uint8_t>(),
-      reinterpret_cast<const __half*>(packed_scales.data_ptr<at::Half>()),
+      reinterpret_cast<__half*>(output.template data_ptr<at::Half>()),
+      packed_weight.template data_ptr<uint8_t>(),
+      reinterpret_cast<const __half*>(packed_scales.template data_ptr<at::Half>()),
       static_cast<int>(k), static_cast<int>(n), static_cast<int>(group_size));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
@@ -3213,17 +3213,17 @@ std::vector<torch::Tensor> awq_sm70_prepare_impl(
 
   auto packed_weight = torch::empty_like(qweight);
   turbomind::unpack_awq_gemm(
-      reinterpret_cast<turbomind::uint4_t*>(packed_weight.data_ptr<int>()),
-      reinterpret_cast<const turbomind::uint4_t*>(qweight.data_ptr<int>()),
+      reinterpret_cast<turbomind::uint4_t*>(packed_weight.template data_ptr<int>()),
+      reinterpret_cast<const turbomind::uint4_t*>(qweight.template data_ptr<int>()),
       static_cast<int>(k), static_cast<int>(n), stream);
 
   auto u16_opts =
       torch::TensorOptions().device(qweight.device()).dtype(torch::kInt16);
   auto tmp_u16 = torch::empty({k, n}, u16_opts);
   turbomind::extend_to_u16(
-      reinterpret_cast<uint16_t*>(tmp_u16.data_ptr<int16_t>()),
+      reinterpret_cast<uint16_t*>(tmp_u16.template data_ptr<int16_t>()),
       reinterpret_cast<const turbomind::uint4_t*>(
-          packed_weight.data_ptr<int>()),
+          packed_weight.template data_ptr<int>()),
       tmp_u16.numel(), stream);
   if (interleave_gated_silu) {
     tmp_u16 = interleave_gated_silu_cols(tmp_u16);
@@ -3289,9 +3289,9 @@ std::vector<torch::Tensor> awq_sm70_prepare_impl(
     const int blocks =
         static_cast<int>((scales.numel() + kThreads - 1) / kThreads);
     pack_awq_compact_source_kernel<<<blocks, kThreads, 0, stream>>>(
-        reinterpret_cast<uint32_t*>(source_stats.data_ptr<int32_t>()),
-        reinterpret_cast<const half*>(scales.data_ptr<at::Half>()),
-        zeros_u8.data_ptr<uint8_t>(), scales.numel());
+        reinterpret_cast<uint32_t*>(source_stats.template data_ptr<int32_t>()),
+        reinterpret_cast<const half*>(scales.template data_ptr<at::Half>()),
+        zeros_u8.template data_ptr<uint8_t>(), scales.numel());
     C10_CUDA_KERNEL_LAUNCH_CHECK();
   } else {
     auto zeros_half = zeros_u8.to(torch::kFloat16);
@@ -3299,9 +3299,9 @@ std::vector<torch::Tensor> awq_sm70_prepare_impl(
         {num_groups, n * 2},
         torch::TensorOptions().device(scales.device()).dtype(torch::kFloat16));
     turbomind::fuse_scales_and_zeros(
-        reinterpret_cast<half*>(source_stats.data_ptr<at::Half>()),
-        reinterpret_cast<const half*>(scales.data_ptr<at::Half>()),
-        reinterpret_cast<half*>(zeros_half.data_ptr<at::Half>()),
+        reinterpret_cast<half*>(source_stats.template data_ptr<at::Half>()),
+        reinterpret_cast<const half*>(scales.template data_ptr<at::Half>()),
+        reinterpret_cast<half*>(zeros_half.template data_ptr<at::Half>()),
         scales.numel(), stream);
   }
 
@@ -3342,8 +3342,8 @@ std::vector<torch::Tensor> awq_sm70_prepare_impl(
     const int blocks =
         static_cast<int>((tm_stats.numel() + kThreads - 1) / kThreads);
     compact_awq_stats_kernel<<<blocks, kThreads, 0, stream>>>(
-        tm_scales.data_ptr<uint8_t>(),
-        reinterpret_cast<const uint32_t*>(tm_stats.data_ptr<int32_t>()),
+        tm_scales.template data_ptr<uint8_t>(),
+        reinterpret_cast<const uint32_t*>(tm_stats.template data_ptr<int32_t>()),
         tm_stats.numel());
     C10_CUDA_KERNEL_LAUNCH_CHECK();
   }
@@ -3427,7 +3427,7 @@ std::vector<torch::Tensor> uint4_sm70_prepare(torch::Tensor qweight,
       torch::TensorOptions().device(qweight.device()).dtype(torch::kInt16);
   auto tmp_u16 = torch::empty({k, n}, u16_opts);
   turbomind::extend_to_u16(
-      reinterpret_cast<uint16_t*>(tmp_u16.data_ptr<int16_t>()),
+      reinterpret_cast<uint16_t*>(tmp_u16.template data_ptr<int16_t>()),
       reinterpret_cast<const uint8_t*>(qweight.data_ptr()), tmp_u16.numel(),
       stream);
   if (interleave_gated_silu) {
@@ -3475,9 +3475,9 @@ std::vector<torch::Tensor> uint4_sm70_prepare(torch::Tensor qweight,
       {num_groups, n * 2},
       torch::TensorOptions().device(scales.device()).dtype(torch::kFloat16));
   turbomind::fuse_scales_and_zeros(
-      reinterpret_cast<half*>(fused.data_ptr<at::Half>()),
-      reinterpret_cast<const half*>(scales.data_ptr<at::Half>()),
-      reinterpret_cast<half*>(zeros.data_ptr<at::Half>()), scales.numel(),
+      reinterpret_cast<half*>(fused.template data_ptr<at::Half>()),
+      reinterpret_cast<const half*>(scales.template data_ptr<at::Half>()),
+      reinterpret_cast<half*>(zeros.template data_ptr<at::Half>()), scales.numel(),
       stream);
 
   const auto order_s = conv_s->order;
@@ -3556,7 +3556,7 @@ std::vector<torch::Tensor> fp8_sm70_prepare(torch::Tensor qweight,
       torch::TensorOptions().device(qweight.device()).dtype(torch::kInt16);
   auto tmp_u16 = torch::empty({k, n}, i16_opts);
   turbomind::extend_to_u16(
-      reinterpret_cast<uint16_t*>(tmp_u16.data_ptr<int16_t>()),
+      reinterpret_cast<uint16_t*>(tmp_u16.template data_ptr<int16_t>()),
       reinterpret_cast<const uint8_t*>(qweight_kn.data_ptr()), tmp_u16.numel(),
       stream);
   if (interleave_gated_silu) {
@@ -3688,7 +3688,7 @@ std::vector<torch::Tensor> mxfp4_sm70_prepare(torch::Tensor qweight,
       torch::TensorOptions().device(qweight.device()).dtype(torch::kInt16);
   auto tmp_u16 = torch::empty({k, n}, u16_opts);
   turbomind::extend_to_u16(
-      reinterpret_cast<uint16_t*>(tmp_u16.data_ptr<int16_t>()),
+      reinterpret_cast<uint16_t*>(tmp_u16.template data_ptr<int16_t>()),
       reinterpret_cast<const uint8_t*>(qweight.data_ptr()), tmp_u16.numel(),
       stream);
   if (interleave_gated_silu) {
@@ -3811,7 +3811,7 @@ std::vector<torch::Tensor> nvfp4_sm70_prepare(torch::Tensor qweight,
       torch::TensorOptions().device(qweight.device()).dtype(torch::kInt16);
   auto tmp_u16 = torch::empty({k, n}, u16_opts);
   turbomind::extend_to_u16(
-      reinterpret_cast<uint16_t*>(tmp_u16.data_ptr<int16_t>()),
+      reinterpret_cast<uint16_t*>(tmp_u16.template data_ptr<int16_t>()),
       reinterpret_cast<const uint8_t*>(qweight.data_ptr()), tmp_u16.numel(),
       stream);
   if (interleave_gated_silu) {
@@ -4671,13 +4671,13 @@ void nvfp4_gemv_sm70_raw_out(torch::Tensor out, torch::Tensor in_feats,
   const int num_groups = static_cast<int>(k / group_size);
   const dim3 partial_grid((qwords + kThreads - 1) / kThreads,
                           static_cast<unsigned int>(split_k));
-  float* partial_ptr = split_k > 1 ? partials.data_ptr<float>() : nullptr;
+  float* partial_ptr = split_k > 1 ? partials.template data_ptr<float>() : nullptr;
   nvfp4_raw_gemv_partial_kernel<kThreads>
       <<<partial_grid, kThreads, 0, stream>>>(
-          reinterpret_cast<__half*>(out.data_ptr<at::Half>()), partial_ptr,
-          reinterpret_cast<const __half*>(in_feats.data_ptr<at::Half>()),
-          reinterpret_cast<const uint32_t*>(qweight_packed.data_ptr<int32_t>()),
-          reinterpret_cast<const __half*>(scales.data_ptr<at::Half>()),
+          reinterpret_cast<__half*>(out.template data_ptr<at::Half>()), partial_ptr,
+          reinterpret_cast<const __half*>(in_feats.template data_ptr<at::Half>()),
+          reinterpret_cast<const uint32_t*>(qweight_packed.template data_ptr<int32_t>()),
+          reinterpret_cast<const __half*>(scales.template data_ptr<at::Half>()),
           static_cast<int>(k), static_cast<int>(n), num_groups,
           static_cast<int>(split_k));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -4686,7 +4686,7 @@ void nvfp4_gemv_sm70_raw_out(torch::Tensor out, torch::Tensor in_feats,
     const dim3 reduce_grid((qwords + kThreads - 1) / kThreads);
     nvfp4_raw_gemv_reduce_kernel<kThreads>
         <<<reduce_grid, kThreads, 0, stream>>>(
-            reinterpret_cast<__half*>(out.data_ptr<at::Half>()), partial_ptr,
+            reinterpret_cast<__half*>(out.template data_ptr<at::Half>()), partial_ptr,
             static_cast<int>(n), static_cast<int>(split_k));
     C10_CUDA_KERNEL_LAUNCH_CHECK();
   }
@@ -4737,10 +4737,10 @@ void nvfp4_gemv_sm70_warp_out(torch::Tensor out, torch::Tensor in_feats,
   const int qwords = static_cast<int>(n / 8);
   const dim3 grid((qwords + kWarpsPerBlock - 1) / kWarpsPerBlock);
   nvfp4_raw_gemv_warp_kernel<kThreads><<<grid, kThreads, 0, stream>>>(
-      reinterpret_cast<__half*>(out.data_ptr<at::Half>()),
-      reinterpret_cast<const __half*>(in_feats.data_ptr<at::Half>()),
-      reinterpret_cast<const uint32_t*>(qweight_packed.data_ptr<int32_t>()),
-      reinterpret_cast<const __half*>(scales.data_ptr<at::Half>()),
+      reinterpret_cast<__half*>(out.template data_ptr<at::Half>()),
+      reinterpret_cast<const __half*>(in_feats.template data_ptr<at::Half>()),
+      reinterpret_cast<const uint32_t*>(qweight_packed.template data_ptr<int32_t>()),
+      reinterpret_cast<const __half*>(scales.template data_ptr<at::Half>()),
       static_cast<int>(n), static_cast<int>(k / group_size));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
@@ -4803,14 +4803,14 @@ void nvfp4_gemv_sm70_h2_out(torch::Tensor out, torch::Tensor in_feats,
   const dim3 partial_grid((qwords + kThreads - 1) / kThreads,
                           static_cast<unsigned int>(split_k));
   __half* partial_ptr =
-      split_k > 1 ? reinterpret_cast<__half*>(partials.data_ptr<at::Half>())
+      split_k > 1 ? reinterpret_cast<__half*>(partials.template data_ptr<at::Half>())
                   : nullptr;
   nvfp4_raw_gemv_h2_partial_kernel<kThreads>
       <<<partial_grid, kThreads, 0, stream>>>(
-          reinterpret_cast<__half*>(out.data_ptr<at::Half>()), partial_ptr,
-          reinterpret_cast<const __half*>(in_feats.data_ptr<at::Half>()),
-          reinterpret_cast<const uint32_t*>(qweight_packed.data_ptr<int32_t>()),
-          reinterpret_cast<const __half*>(scales.data_ptr<at::Half>()),
+          reinterpret_cast<__half*>(out.template data_ptr<at::Half>()), partial_ptr,
+          reinterpret_cast<const __half*>(in_feats.template data_ptr<at::Half>()),
+          reinterpret_cast<const uint32_t*>(qweight_packed.template data_ptr<int32_t>()),
+          reinterpret_cast<const __half*>(scales.template data_ptr<at::Half>()),
           static_cast<int>(k), static_cast<int>(n), num_groups,
           static_cast<int>(split_k));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -4819,7 +4819,7 @@ void nvfp4_gemv_sm70_h2_out(torch::Tensor out, torch::Tensor in_feats,
     const dim3 reduce_grid((qwords + kThreads - 1) / kThreads);
     nvfp4_raw_gemv_h2_reduce_kernel<kThreads>
         <<<reduce_grid, kThreads, 0, stream>>>(
-            reinterpret_cast<__half*>(out.data_ptr<at::Half>()), partial_ptr,
+            reinterpret_cast<__half*>(out.template data_ptr<at::Half>()), partial_ptr,
             static_cast<int>(n), static_cast<int>(split_k));
     C10_CUDA_KERNEL_LAUNCH_CHECK();
   }
@@ -4893,7 +4893,7 @@ void fp8_gemm_sm70_out_meta(torch::Tensor out, torch::Tensor in_feats,
   TORCH_CHECK(meta.numel() >= 2, "fp8_gemm_sm70: meta must have two values.");
   auto meta_cpu = meta.device().is_cpu() ? meta.contiguous()
                                          : meta.to(torch::kCPU).contiguous();
-  const int64_t* meta_ptr = meta_cpu.data_ptr<int64_t>();
+  const int64_t* meta_ptr = meta_cpu.template data_ptr<int64_t>();
   fp8_gemm_sm70_out(out, in_feats, tm_weight, tm_scales, 128, meta_ptr[0],
                     meta_ptr[1], gated_silu);
 }
@@ -5187,7 +5187,7 @@ void launch_sm70_f16_indexed_rerank_gemm(
   turbomind::gemm::MatrixLayout desc_P = desc_D;
   desc_P.ld = static_cast<int>(partials.stride(0));
   epi_param.partials = to_param(partials.data_ptr(), desc_P);
-  epi_param.locks = barriers.data_ptr<int>();
+  epi_param.locks = barriers.template data_ptr<int>();
   epi_param.combine_mat =
       MatrixCombination_v3{to_param(nullptr, MatrixLayout{}), 1.f, 0.f};
   Sched sched{{m, selected_rows, k, 1}, 0, split_k};
@@ -5208,8 +5208,8 @@ void launch_sm70_f16_indexed_rerank_gemm(
   const int output_count = m * kCandidates;
   sm70_f16_extract_candidate_rows_kernel<kThreads>
       <<<(output_count + kThreads - 1) / kThreads, kThreads, 0, stream>>>(
-          reinterpret_cast<half*>(out.data_ptr<at::Half>()),
-          reinterpret_cast<const half*>(expanded.data_ptr<at::Half>()), m,
+          reinterpret_cast<half*>(out.template data_ptr<at::Half>()),
+          reinterpret_cast<const half*>(expanded.template data_ptr<at::Half>()), m,
           kCandidates, expanded.stride(0));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
@@ -5229,9 +5229,9 @@ void launch_sm70_f16_indexed_rerank(
 
   sm70_f16_gather_candidate_rows_kernel<kThreads>
       <<<selected_rows, kThreads, 0, stream>>>(
-          reinterpret_cast<half*>(selected_raw.data_ptr<at::Half>()),
-          reinterpret_cast<const half*>(weight.data_ptr<at::Half>()),
-          candidate_ids.data_ptr<int64_t>(), selected_rows, k,
+          reinterpret_cast<half*>(selected_raw.template data_ptr<at::Half>()),
+          reinterpret_cast<const half*>(weight.template data_ptr<at::Half>()),
+          candidate_ids.template data_ptr<int64_t>(), selected_rows, k,
           weight.stride(0));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 
@@ -5285,9 +5285,9 @@ void launch_sm70_f16_indexed_rerank_packed(
   const int blocks = std::min(1024, (vector_count + kThreads - 1) / kThreads);
   sm70_f16_gather_packed_candidate_rows_kernel<kThreads>
       <<<blocks, kThreads, 0, stream>>>(
-          reinterpret_cast<half*>(selected_packed.data_ptr<at::Half>()),
-          reinterpret_cast<const half*>(packed_weight.data_ptr<at::Half>()),
-          candidate_ids.data_ptr<int64_t>(), selected_rows, k);
+          reinterpret_cast<half*>(selected_packed.template data_ptr<at::Half>()),
+          reinterpret_cast<const half*>(packed_weight.template data_ptr<at::Half>()),
+          candidate_ids.template data_ptr<int64_t>(), selected_rows, k);
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 
   turbomind::gemm::MatrixLayout desc_B{
@@ -5504,9 +5504,9 @@ void sm70_f16_rerank_keys_out(torch::Tensor keys, torch::Tensor logits,
   const int count = static_cast<int>(keys.numel());
   sm70_f16_rerank_keys_kernel<kThreads>
       <<<(count + kThreads - 1) / kThreads, kThreads, 0, stream>>>(
-          keys.data_ptr<int64_t>(),
-          reinterpret_cast<const half*>(logits.data_ptr<at::Half>()),
-          candidate_ids.data_ptr<int64_t>(), count);
+          keys.template data_ptr<int64_t>(),
+          reinterpret_cast<const half*>(logits.template data_ptr<at::Half>()),
+          candidate_ids.template data_ptr<int64_t>(), count);
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 
@@ -5547,10 +5547,10 @@ void sm70_f16_rerank_topk_out(torch::Tensor values_out, torch::Tensor ids_out,
   }
   const cudaStream_t stream = at::cuda::getCurrentCUDAStream();
   sm70_f16_rerank_topk_kernel<<<rows, kThreads, 0, stream>>>(
-      reinterpret_cast<half*>(values_out.data_ptr<at::Half>()),
-      ids_out.data_ptr<int64_t>(),
-      reinterpret_cast<const half*>(logits.data_ptr<at::Half>()),
-      candidate_ids.data_ptr<int64_t>(), rows,
+      reinterpret_cast<half*>(values_out.template data_ptr<at::Half>()),
+      ids_out.template data_ptr<int64_t>(),
+      reinterpret_cast<const half*>(logits.template data_ptr<at::Half>()),
+      candidate_ids.template data_ptr<int64_t>(), rows,
       static_cast<int>(values_out.size(1)), vocab_start_index);
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
@@ -5593,9 +5593,9 @@ void sm70_f16_lm_head_top1_out(torch::Tensor values_out,
              static_cast<unsigned int>(m));
   sm70_f16_lm_head_top1_stage1_kernel<rows_per_block>
       <<<grid1, stage1_threads, 0, stream>>>(
-          partial_values.data_ptr<float>(), partial_indices.data_ptr<int64_t>(),
-          reinterpret_cast<const half*>(in_feats.data_ptr<at::Half>()),
-          reinterpret_cast<const half*>(weight.data_ptr<at::Half>()),
+          partial_values.template data_ptr<float>(), partial_indices.template data_ptr<int64_t>(),
+          reinterpret_cast<const half*>(in_feats.template data_ptr<at::Half>()),
+          reinterpret_cast<const half*>(weight.template data_ptr<at::Half>()),
           static_cast<int>(m), static_cast<int>(n), static_cast<int>(k),
           static_cast<int>(valid_n), in_feats.stride(0), weight_row_stride,
           vocab_start_index, static_cast<int>(num_blocks_n));
@@ -5603,8 +5603,8 @@ void sm70_f16_lm_head_top1_out(torch::Tensor values_out,
 
   sm70_f16_lm_head_top1_stage2_kernel<stage2_threads>
       <<<static_cast<unsigned int>(m), stage2_threads, 0, stream>>>(
-          values_out.data_ptr<float>(), indices_out.data_ptr<int64_t>(),
-          partial_values.data_ptr<float>(), partial_indices.data_ptr<int64_t>(),
+          values_out.template data_ptr<float>(), indices_out.template data_ptr<int64_t>(),
+          partial_values.template data_ptr<float>(), partial_indices.template data_ptr<int64_t>(),
           static_cast<int>(m), static_cast<int>(num_blocks_n));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
@@ -5698,9 +5698,9 @@ void sm70_f16_lm_head_top1_tc_out(torch::Tensor values_out,
   TORCH_CHECK(valid_n <= std::numeric_limits<int>::max(),
               "sm70_f16_lm_head_top1_tc_out: vocab shard too large.");
   EpilogueParam epi_param{};
-  epi_param.c = {partial_values.data_ptr<float>(),
+  epi_param.c = {partial_values.template data_ptr<float>(),
                  static_cast<int>(vocab_start_index), nullptr, nullptr};
-  epi_param.partials = {partial_indices.data_ptr<int64_t>(),
+  epi_param.partials = {partial_indices.template data_ptr<int64_t>(),
                         static_cast<int>(num_tiles_n), nullptr, nullptr};
 
   constexpr int log_tile = 4;
@@ -5724,8 +5724,8 @@ void sm70_f16_lm_head_top1_tc_out(torch::Tensor values_out,
 
   sm70_f16_lm_head_top1_stage2_kernel<stage2_threads>
       <<<static_cast<unsigned int>(m), stage2_threads, 0, stream>>>(
-          values_out.data_ptr<float>(), indices_out.data_ptr<int64_t>(),
-          partial_values.data_ptr<float>(), partial_indices.data_ptr<int64_t>(),
+          values_out.template data_ptr<float>(), indices_out.template data_ptr<int64_t>(),
+          partial_values.template data_ptr<float>(), partial_indices.template data_ptr<int64_t>(),
           static_cast<int>(m), static_cast<int>(num_tiles_n));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
@@ -5820,9 +5820,9 @@ void sm70_f16_lm_head_top20_tc_out(torch::Tensor values_out,
   TORCH_CHECK(valid_n <= std::numeric_limits<int>::max(),
               "sm70_f16_lm_head_top20_tc_out: vocab shard too large.");
   EpilogueParam epi_param{};
-  epi_param.c = {partial_values.data_ptr<float>(),
+  epi_param.c = {partial_values.template data_ptr<float>(),
                  static_cast<int>(vocab_start_index), nullptr, nullptr};
-  epi_param.partials = {partial_indices.data_ptr<int64_t>(),
+  epi_param.partials = {partial_indices.template data_ptr<int64_t>(),
                         static_cast<int>(num_tiles_n), nullptr, nullptr};
 
   constexpr int log_tile = 4;
@@ -5847,8 +5847,8 @@ void sm70_f16_lm_head_top20_tc_out(torch::Tensor values_out,
   const int64_t num_candidates = num_tiles_n * top_k;
   sm70_f16_lm_head_top20_stage2_kernel<<<static_cast<unsigned int>(m),
                                          WARP_SIZE, 0, stream>>>(
-      values_out.data_ptr<float>(), indices_out.data_ptr<int64_t>(),
-      partial_values.data_ptr<float>(), partial_indices.data_ptr<int64_t>(),
+      values_out.template data_ptr<float>(), indices_out.template data_ptr<int64_t>(),
+      partial_values.template data_ptr<float>(), partial_indices.template data_ptr<int64_t>(),
       static_cast<int>(m), static_cast<int>(num_candidates), vocab_start_index,
       static_cast<int>(valid_n));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -5893,10 +5893,10 @@ void sm70_merge_tail_top20_pack_out(torch::Tensor pairs_out,
   const size_t shared_bytes =
       static_cast<size_t>(top_k + tail_logits.numel()) * sizeof(float);
   sm70_merge_tail_top20_pack_kernel<<<1, WARP_SIZE, shared_bytes, stream>>>(
-      pairs_out.data_ptr<float>(), base_values.data_ptr<float>(),
-      base_indices.data_ptr<int64_t>(), base_token_id_map.data_ptr<int64_t>(),
-      reinterpret_cast<const half*>(tail_logits.data_ptr<at::Half>()),
-      tail_token_ids.data_ptr<int64_t>(),
+      pairs_out.template data_ptr<float>(), base_values.template data_ptr<float>(),
+      base_indices.template data_ptr<int64_t>(), base_token_id_map.template data_ptr<int64_t>(),
+      reinterpret_cast<const half*>(tail_logits.template data_ptr<at::Half>()),
+      tail_token_ids.template data_ptr<int64_t>(),
       static_cast<int>(base_token_id_map.numel()),
       static_cast<int>(tail_logits.numel()), static_cast<int>(tail_row_start));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -5935,10 +5935,10 @@ void sm70_sample_packed_top20_out(torch::Tensor sampled_token_out,
   const at::cuda::OptionalCUDAGuard device_guard(device_of(gathered_pairs));
   const cudaStream_t stream = at::cuda::getCurrentCUDAStream();
   sm70_sample_packed_top20_kernel<<<1, WARP_SIZE, 0, stream>>>(
-      sampled_token_out.data_ptr<int64_t>(), sparse_ids_out.data_ptr<int64_t>(),
-      sparse_probs_out.data_ptr<float>(), gathered_pairs.data_ptr<float>(),
+      sampled_token_out.template data_ptr<int64_t>(), sparse_ids_out.template data_ptr<int64_t>(),
+      sparse_probs_out.template data_ptr<float>(), gathered_pairs.template data_ptr<float>(),
       static_cast<int>(gathered_pairs.numel() / 3),
-      exponential.data_ptr<float>(), static_cast<int>(exponential.numel()),
+      exponential.template data_ptr<float>(), static_cast<int>(exponential.numel()),
       static_cast<float>(top_p));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
@@ -6003,12 +6003,12 @@ void sm70_dynamic_draft_vocab_update_tail_out(
   const at::cuda::OptionalCUDAGuard device_guard(device_of(lru_token_ids));
   const auto stream = at::cuda::getCurrentCUDAStream();
   sm70_dynamic_draft_vocab_update_tail_kernel<<<1, 256, 0, stream>>>(
-      lru_token_ids.data_ptr<int64_t>(),
-      local_tail_token_ids.data_ptr<int64_t>(),
-      source_row_indices.data_ptr<int64_t>(),
-      observed_output_ids.data_ptr<int32_t>(), observed_output_ids.numel(),
-      target_candidate_ids.data_ptr<int64_t>(), target_candidate_ids.numel(),
-      base_token_mask.data_ptr<bool>(), static_cast<int>(full_vocab_size),
+      lru_token_ids.template data_ptr<int64_t>(),
+      local_tail_token_ids.template data_ptr<int64_t>(),
+      source_row_indices.template data_ptr<int64_t>(),
+      observed_output_ids.template data_ptr<int32_t>(), observed_output_ids.numel(),
+      target_candidate_ids.template data_ptr<int64_t>(), target_candidate_ids.numel(),
+      base_token_mask.template data_ptr<bool>(), static_cast<int>(full_vocab_size),
       static_cast<int>(local_shard_start), static_cast<int>(local_shard_end),
       static_cast<int>(lru_token_ids.numel()));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -6057,9 +6057,9 @@ void sm70_dynamic_draft_vocab_refresh_tail_weight_out(
   const auto stream = at::cuda::getCurrentCUDAStream();
   sm70_dynamic_draft_vocab_refresh_tail_weight_kernel<<<grid, kThreads, 0,
                                                         stream>>>(
-      reinterpret_cast<half*>(local_tail_weight.data_ptr<at::Half>()),
-      reinterpret_cast<const half*>(source_weight.data_ptr<at::Half>()),
-      source_row_indices.data_ptr<int64_t>(),
+      reinterpret_cast<half*>(local_tail_weight.template data_ptr<at::Half>()),
+      reinterpret_cast<const half*>(source_weight.template data_ptr<at::Half>()),
+      source_row_indices.template data_ptr<int64_t>(),
       static_cast<int>(source_weight.size(0)),
       static_cast<int>(source_weight.size(1)));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -6082,9 +6082,9 @@ void sm70_f16_gate_mul_out(torch::Tensor out, torch::Tensor in_feats,
   constexpr int kThreads = 256;
   sm70_f16_gate_mul_kernel<kThreads>
       <<<static_cast<unsigned int>(m), kThreads, 0, stream>>>(
-          reinterpret_cast<half*>(out.data_ptr<at::Half>()),
-          reinterpret_cast<const half*>(in_feats.data_ptr<at::Half>()),
-          reinterpret_cast<const half*>(gate_weight.data_ptr<at::Half>()),
+          reinterpret_cast<half*>(out.template data_ptr<at::Half>()),
+          reinterpret_cast<const half*>(in_feats.template data_ptr<at::Half>()),
+          reinterpret_cast<const half*>(gate_weight.template data_ptr<at::Half>()),
           static_cast<int>(m), static_cast<int>(n), static_cast<int>(k),
           out.stride(0), in_feats.stride(0));
   C10_CUDA_KERNEL_LAUNCH_CHECK();

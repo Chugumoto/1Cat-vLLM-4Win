@@ -1,5 +1,8 @@
 <!-- markdownlint-disable MD041 -->
 
+> **Windows + Tesla V100:** see [README.windows.md](README.windows.md).
+> Requires CUDA 12.8 (CUDA 13 dropped Volta/SM70).
+
 <p align="center">
   <img src="./assets/1cat-vllm-logo.png" alt="1Cat-vLLM logo" width="420">
 </p>

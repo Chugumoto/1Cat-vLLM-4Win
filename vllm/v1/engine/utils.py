@@ -3,6 +3,7 @@
 
 import contextlib
 import os
+import platform
 import threading
 import weakref
 from collections.abc import Callable, Iterator
@@ -995,7 +996,8 @@ def get_engine_zmq_addresses(
         client_local_only = False
 
     def _addr() -> str:
-        if client_local_only:
+        # ZMQ ipc:// is not supported on Windows (libzmq).
+        if client_local_only and platform.system() != "Windows":
             return get_open_zmq_ipc_path()
         return get_tcp_uri(host, 0 if defer_api_server_ports else get_open_port())
 
@@ -1107,7 +1109,8 @@ def launch_core_engines(
     handshake_local_only = offline_mode or local_engine_count == dp_size
 
     # NOTE(yongji): handling scaling from intra-node to inter-node
-    if parallel_config.enable_elastic_ep:
+    # Windows has no ZMQ ipc://, so force TCP handshake addresses.
+    if parallel_config.enable_elastic_ep or platform.system() == "Windows":
         handshake_local_only = False
 
     # Preserve "port=0 means auto-pick" for the handshake address, which
@@ -1118,7 +1121,12 @@ def launch_core_engines(
 
     if local_engines_only and dp_rank > 0:
         assert not handshake_local_only
-        local_handshake_address = get_open_zmq_ipc_path()
+        if platform.system() == "Windows":
+            local_handshake_address = get_engine_client_zmq_addr(
+                handshake_local_only, host, get_open_port()
+            )
+        else:
+            local_handshake_address = get_open_zmq_ipc_path()
         client_handshake_address = local_handshake_address
     else:
         local_handshake_address = handshake_address
@@ -1182,7 +1190,8 @@ def wait_for_engine_startup(
         and not parallel_config.data_parallel_external_lb
     )
 
-    if proc_manager is not None:
+    if proc_manager is not None and platform.system() != "Windows":
+        # zmq.Poller cannot watch Win32 process handles the same way as fds.
         for sentinel in proc_manager.sentinels():
             poller.register(sentinel, zmq.POLLIN)
     if coord_process is not None:

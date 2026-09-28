@@ -33,6 +33,8 @@ def vllm_version_matches_substr(substr: str) -> bool:
                 "inspected. This may cause platform detection to fail."
             )
             raise e
+    if not vllm_version:
+        return False
     return substr in vllm_version
 
 

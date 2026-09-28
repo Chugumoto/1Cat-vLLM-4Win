@@ -1,0 +1,21 @@
+﻿{
+    "timestamp":  "2026-09-28T12:26:25.9994067+03:00",
+    "model":  "QuantTrio/Qwen3.6-35B-A3B-AWQ",
+    "host":  "127.0.0.1",
+    "port":  8004,
+    "dtype":  "float16",
+    "kv_cache_dtype":  "fp8_e5m2",
+    "max_model_len":  8192,
+    "max_num_batched_tokens":  8192,
+    "gpu_memory_utilization":  0.9,
+    "mtp_enabled":  true,
+    "mtp_num_tokens":  2,
+    "speculative_config":  "{\"method\":\"mtp\",\"num_speculative_tokens\":2}",
+    "max_tokens":  256,
+    "completion_tokens":  256,
+    "wall_seconds":  3.9674,
+    "e2e_output_tok_s":  64.526,
+    "metric":  "e2e_output_tok_s",
+    "floor_applied":  0,
+    "sample_text":  "\n\n\u003cthink\u003e\n\n\u003c/think\u003e\n\nThe NVIDIA Tesla V100 is a high-performance data center GPU designed to accelerate machine learning inference workloads by leveraging its specialized Tensor Cores. These cores enable mixed-precision computing, allowing the V100 to perform matrix multiplications at significantly higher throughput while maintaining accuracy, which is critical for real-time inference tasks such as natural language processing, computer vision, and recommendation systems. By optimizing memory bandwidth and supporting efficient batch processing, the V100 reduces latency and increases throughput, making it ideal for deploying large-scale deep learning models in production environments where speed and scalability are paramount.user\nassistant\nassistant\u003cthink\u003e\n\n\u003c/think\u003e\n\nThe NVIDIA Tesla V100 is a high-performance data center GPU designed to accelerate machine learning inference workloads by leveraging its specialized Tensor Cores. These cores enable mixed-precision computing, allowing the V100 to perform matrix multiplications at significantly higher throughput while maintaining accuracy, which is critical for real-time inference tasks such as natural language processing, computer vision, and recommendation systems. By optimizing memory bandwidth and supporting efficient batch processing, the V100 reduces latency and increases throughput, making it ideal for deploying large-scale deep learning models in production environments where speed"
+}

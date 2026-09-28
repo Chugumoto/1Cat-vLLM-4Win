@@ -980,10 +980,10 @@ void launch_mxfp4_qpn_m1(torch::Tensor out, torch::Tensor input,
   const int k = static_cast<int>(input.size(1));
   mxfp4_qpn_m1_sm70_kernel<kSplitK>
       <<<dim3(n / 32, 6), 32 * kSplitK, 0, at::cuda::getCurrentCUDAStream()>>>(
-          reinterpret_cast<const half*>(input.data_ptr<at::Half>()),
-          reinterpret_cast<const uint32_t*>(weights.data_ptr<int32_t>()),
-          scales.data_ptr<uint8_t>(), expert_ids.data_ptr<int32_t>(),
-          reinterpret_cast<half*>(out.data_ptr<at::Half>()), n, k,
+          reinterpret_cast<const half*>(input.template data_ptr<at::Half>()),
+          reinterpret_cast<const uint32_t*>(weights.template data_ptr<int32_t>()),
+          scales.template data_ptr<uint8_t>(), expert_ids.template data_ptr<int32_t>(),
+          reinterpret_cast<half*>(out.template data_ptr<at::Half>()), n, k,
           broadcast_input);
 }
 
@@ -996,11 +996,11 @@ void launch_nvfp4_qpn_m1(torch::Tensor out, torch::Tensor input,
   const int routes = static_cast<int>(expert_ids.numel());
   nvfp4_qpn_m1_sm70_kernel<kSplitK><<<dim3(n / 32, routes), 32 * kSplitK, 0,
                                       at::cuda::getCurrentCUDAStream()>>>(
-      reinterpret_cast<const half*>(input.data_ptr<at::Half>()),
-      reinterpret_cast<const uint32_t*>(weights.data_ptr<int32_t>()),
-      reinterpret_cast<const half*>(scales.data_ptr<at::Half>()),
-      expert_ids.data_ptr<int32_t>(),
-      reinterpret_cast<half*>(out.data_ptr<at::Half>()), n, k, broadcast_input);
+      reinterpret_cast<const half*>(input.template data_ptr<at::Half>()),
+      reinterpret_cast<const uint32_t*>(weights.template data_ptr<int32_t>()),
+      reinterpret_cast<const half*>(scales.template data_ptr<at::Half>()),
+      expert_ids.template data_ptr<int32_t>(),
+      reinterpret_cast<half*>(out.template data_ptr<at::Half>()), n, k, broadcast_input);
 }
 
 template <int kSplitK>
@@ -1016,11 +1016,11 @@ void launch_nvfp4_qpn_raw_scale(torch::Tensor out, torch::Tensor input,
   nvfp4_qpn_raw_scale_sm70_kernel<kSplitK>
       <<<dim3(n / 32, routes), 32 * kSplitK, 0,
          at::cuda::getCurrentCUDAStream()>>>(
-          reinterpret_cast<const half*>(input.data_ptr<at::Half>()),
-          reinterpret_cast<const uint32_t*>(weights.data_ptr<int32_t>()),
-          scale_codes.data_ptr<uint8_t>(), global_scales.data_ptr<float>(),
-          expert_ids.data_ptr<int32_t>(),
-          reinterpret_cast<half*>(out.data_ptr<at::Half>()), n, k,
+          reinterpret_cast<const half*>(input.template data_ptr<at::Half>()),
+          reinterpret_cast<const uint32_t*>(weights.template data_ptr<int32_t>()),
+          scale_codes.template data_ptr<uint8_t>(), global_scales.template data_ptr<float>(),
+          expert_ids.template data_ptr<int32_t>(),
+          reinterpret_cast<half*>(out.template data_ptr<at::Half>()), n, k,
           broadcast_input, interleaved_w13);
 }
 
@@ -1502,10 +1502,10 @@ void launch_nvfp4_qpn_w13_swiglu_batch(torch::Tensor out, torch::Tensor input,
   nvfp4_qpn_w13_swiglu_batch_sm70_kernel<kSplitK, kInterleaved>
       <<<dim3(5, static_cast<unsigned>(routes)), 64 * kSplitK, 0,
          at::cuda::getCurrentCUDAStream()>>>(
-          reinterpret_cast<const half*>(input.data_ptr<at::Half>()),
-          reinterpret_cast<const uint32_t*>(weights.data_ptr<int32_t>()),
-          scales.data_ptr<at::Half>(), nullptr, expert_ids.data_ptr<int32_t>(),
-          reinterpret_cast<half*>(out.data_ptr<at::Half>()));
+          reinterpret_cast<const half*>(input.template data_ptr<at::Half>()),
+          reinterpret_cast<const uint32_t*>(weights.template data_ptr<int32_t>()),
+          scales.template data_ptr<at::Half>(), nullptr, expert_ids.template data_ptr<int32_t>(),
+          reinterpret_cast<half*>(out.template data_ptr<at::Half>()));
 }
 
 template <int kSplitK, bool kInterleaved>
@@ -1519,11 +1519,11 @@ void launch_nvfp4_qpn_raw_w13_swiglu_batch(torch::Tensor out,
   nvfp4_qpn_w13_swiglu_batch_sm70_kernel<kSplitK, kInterleaved, true>
       <<<dim3(5, static_cast<unsigned>(routes)), 64 * kSplitK, 0,
          at::cuda::getCurrentCUDAStream()>>>(
-          reinterpret_cast<const half*>(input.data_ptr<at::Half>()),
-          reinterpret_cast<const uint32_t*>(weights.data_ptr<int32_t>()),
-          scale_codes.data_ptr<uint8_t>(), global_scales.data_ptr<float>(),
-          expert_ids.data_ptr<int32_t>(),
-          reinterpret_cast<half*>(out.data_ptr<at::Half>()));
+          reinterpret_cast<const half*>(input.template data_ptr<at::Half>()),
+          reinterpret_cast<const uint32_t*>(weights.template data_ptr<int32_t>()),
+          scale_codes.template data_ptr<uint8_t>(), global_scales.template data_ptr<float>(),
+          expert_ids.template data_ptr<int32_t>(),
+          reinterpret_cast<half*>(out.template data_ptr<at::Half>()));
 }
 
 void nvfp4_moe_qpn_w13_swiglu_batch_sm70_out(

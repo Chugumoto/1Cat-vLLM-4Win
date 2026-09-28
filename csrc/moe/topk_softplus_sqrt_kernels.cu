@@ -477,27 +477,11 @@ void topkGatingSoftplusSqrtLauncherHelper(
     auto* kernel =
         &topkGatingSoftplusSqrt<VPT, EXPERTS, WARPS_PER_TB, BYTES_PER_LDG,
                                 WARP_SIZE_PARAM, USE_HASH, IndType, InputType>;
-#ifndef USE_ROCM
-    cudaLaunchConfig_t config = {};
-    config.gridDim = num_blocks;
-    config.blockDim = block_dim;
-    config.dynamicSmemBytes = 0;
-    config.stream = stream;
-    cudaLaunchAttribute attrs[1];
-    attrs[0].id = cudaLaunchAttributeProgrammaticStreamSerialization;
-    attrs[0].val.programmaticStreamSerializationAllowed = 1;
-    config.numAttrs = 1;
-    config.attrs = attrs;
-    cudaLaunchKernelEx(&config, kernel, input, finished, output, num_rows,
-                       indices, source_row, k, start_expert, end_expert,
-                       renormalize, routed_scaling_factor, correction_bias,
-                       input_ids, tid2eid);
-#else
+    // Plain launch avoids #ifdef inside this lambda (MSVC) and matches ROCm.
     kernel<<<num_blocks, block_dim, 0, stream>>>(
         input, finished, output, num_rows, indices, source_row, k, start_expert,
         end_expert, renormalize, routed_scaling_factor, correction_bias,
         input_ids, tid2eid);
-#endif
   })
 }
 
@@ -637,7 +621,7 @@ void dispatch_topk_softplus_sqrt_launch(
     const c10::optional<torch::Tensor>& tid2eid, cudaStream_t stream) {
   const float* bias_ptr = nullptr;
   if (correction_bias.has_value()) {
-    bias_ptr = correction_bias.value().data_ptr<float>();
+    bias_ptr = correction_bias.value().template data_ptr<float>();
   }
   bool use_hash = false;
   if (tid2eid.has_value()) {
@@ -648,25 +632,25 @@ void dispatch_topk_softplus_sqrt_launch(
     const int* input_ids_ptr = nullptr;
     const int* tid2eid_ptr = nullptr;
     if (tid2eid.has_value()) {
-      input_ids_ptr = input_ids.value().data_ptr<int>();
-      tid2eid_ptr = tid2eid.value().data_ptr<int>();
+      input_ids_ptr = input_ids.value().template data_ptr<int>();
+      tid2eid_ptr = tid2eid.value().template data_ptr<int>();
     }
 
     vllm::moe::topkGatingSoftplusSqrtKernelLauncher<int, ComputeType>(
-        gating_output, topk_weights.data_ptr<float>(),
-        topk_indices.data_ptr<int>(), token_expert_indices.data_ptr<int>(),
+        gating_output, topk_weights.template data_ptr<float>(),
+        topk_indices.template data_ptr<int>(), token_expert_indices.template data_ptr<int>(),
         num_tokens, num_experts, topk, renormalize, routed_scaling_factor,
         bias_ptr, use_hash, input_ids_ptr, tid2eid_ptr, stream);
   } else if (topk_indices.scalar_type() == at::ScalarType::UInt32) {
     const uint32_t* input_ids_ptr = nullptr;
     const uint32_t* tid2eid_ptr = nullptr;
     if (tid2eid.has_value()) {
-      input_ids_ptr = input_ids.value().data_ptr<uint32_t>();
-      tid2eid_ptr = tid2eid.value().data_ptr<uint32_t>();
+      input_ids_ptr = input_ids.value().template data_ptr<uint32_t>();
+      tid2eid_ptr = tid2eid.value().template data_ptr<uint32_t>();
     }
     vllm::moe::topkGatingSoftplusSqrtKernelLauncher<uint32_t, ComputeType>(
-        gating_output, topk_weights.data_ptr<float>(),
-        topk_indices.data_ptr<uint32_t>(), token_expert_indices.data_ptr<int>(),
+        gating_output, topk_weights.template data_ptr<float>(),
+        topk_indices.template data_ptr<uint32_t>(), token_expert_indices.template data_ptr<int>(),
         num_tokens, num_experts, topk, renormalize, routed_scaling_factor,
         bias_ptr, use_hash, input_ids_ptr, tid2eid_ptr, stream);
   } else {
@@ -675,13 +659,13 @@ void dispatch_topk_softplus_sqrt_launch(
     const int64_t* input_ids_ptr = nullptr;
     const int64_t* tid2eid_ptr = nullptr;
     if (tid2eid.has_value()) {
-      input_ids_ptr = input_ids.value().data_ptr<int64_t>();
-      tid2eid_ptr = tid2eid.value().data_ptr<int64_t>();
+      input_ids_ptr = input_ids.value().template data_ptr<int64_t>();
+      tid2eid_ptr = tid2eid.value().template data_ptr<int64_t>();
     }
 
     vllm::moe::topkGatingSoftplusSqrtKernelLauncher<int64_t, ComputeType>(
-        gating_output, topk_weights.data_ptr<float>(),
-        topk_indices.data_ptr<int64_t>(), token_expert_indices.data_ptr<int>(),
+        gating_output, topk_weights.template data_ptr<float>(),
+        topk_indices.template data_ptr<int64_t>(), token_expert_indices.template data_ptr<int>(),
         num_tokens, num_experts, topk, renormalize, routed_scaling_factor,
         bias_ptr, use_hash, input_ids_ptr, tid2eid_ptr, stream);
   }

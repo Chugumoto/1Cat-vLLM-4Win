@@ -1,0 +1,22 @@
+﻿{
+    "timestamp":  "2026-09-28T13:41:34.7387371+03:00",
+    "model":  "C:\\Users\\Chugumoto\\.cache\\huggingface\\hub\\models--nvidia--Qwen3.6-35B-A3B-NVFP4\\manual",
+    "host":  "127.0.0.1",
+    "port":  8005,
+    "dtype":  "float16",
+    "kv_cache_dtype":  "fp8_e5m2",
+    "max_model_len":  4096,
+    "max_num_batched_tokens":  4096,
+    "gpu_memory_utilization":  0.9,
+    "attention_backend":  "FLASH_ATTN_V100",
+    "mtp_enabled":  true,
+    "mtp_num_tokens":  4,
+    "speculative_config":  "{\"method\":\"mtp\",\"num_speculative_tokens\":4}",
+    "max_tokens":  256,
+    "completion_tokens":  256,
+    "wall_seconds":  3.6972,
+    "e2e_output_tok_s":  69.242,
+    "metric":  "e2e_output_tok_s",
+    "floor_applied":  0,
+    "sample_text":  "\n\n\u003cthink\u003e\nHere\u0027s a thinking process:\n\n1.  **Analyze User Input:**\n   - **Topic:** NVIDIA Tesla V100\n   - **Context:** Machine learning inference\n   - **Format:** Short technical paragraph\n   - **Key Requirements:** Explain its use/purpose specifically in ML inference\n\n2.  **Identify Key Technical Facts about Tesla V100:**\n   - Architecture: Volta (GV100)\n   - Key features: Tensor Cores (first generation), HBM2 memory, high memory bandwidth, NVLink support\n   - Performance: High FP16/FP32/INT8 throughput, optimized for AI workloads\n   - Inference context: Used for serving trained models, low-latency predictions, batch processing, supports frameworks like TensorRT, ONNX Runtime, TensorFlow, PyTorch\n   - Note: Tesla V100 is technically a data center GPU, often used for both training and inference, but the prompt specifically asks about inference.\n\n3.  **Focus on Inference-Specific Aspects:**\n   - Tensor Cores accelerate mixed-precision (FP16/INT8) computations, crucial for inference where precision can be reduced without significant accuracy"
+}

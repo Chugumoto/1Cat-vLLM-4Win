@@ -214,7 +214,7 @@ inline __device__ void Stcs(T* __restrict__ dst, const Array<T, N>& src)
         __stcs((uint2*)dst, (const uint2&)src);
     }
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint1)) {
-        __stcs((uint*)dst, (const uint&)src);
+        __stcs((unsigned int*)dst, (const unsigned int&)src);
     }
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint16_t)) {
         __stcs((uint16_t*)dst, (const uint16_t&)src);
@@ -239,7 +239,7 @@ inline __device__ void Stcg(T* __restrict__ dst, const Array<T, N>& src)
         __stcg((uint2*)dst, (const uint2&)src);
     }
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint1)) {
-        __stcg((uint*)dst, (const uint&)src);
+        __stcg((unsigned int*)dst, (const unsigned int&)src);
     }
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint16_t)) {
         __stcg((uint16_t*)dst, (const uint16_t&)src);
@@ -263,8 +263,8 @@ inline __device__ void Ldg(Array<T, N>& dst, const T* src)
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint2)) {
         (uint2&)dst = __ldg((const uint2*)src);
     }
-    else if constexpr (sizeof(Array<T, N>) == sizeof(uint)) {
-        (uint&)dst = __ldg((const uint*)src);
+    else if constexpr (sizeof(Array<T, N>) == sizeof(unsigned int)) {
+        (unsigned int&)dst = __ldg((const unsigned int*)src);
     }
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint16_t)) {
         (uint16_t&)dst = __ldg((const uint16_t*)src);
@@ -288,8 +288,8 @@ inline __device__ void Ldcs(Array<T, N>& dst, const T* src)
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint2)) {
         (uint2&)dst = __ldcs((const uint2*)src);
     }
-    else if constexpr (sizeof(Array<T, N>) == sizeof(uint)) {
-        (uint&)dst = __ldcs((const uint*)src);
+    else if constexpr (sizeof(Array<T, N>) == sizeof(unsigned int)) {
+        (unsigned int&)dst = __ldcs((const unsigned int*)src);
     }
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint16_t)) {
         (uint16_t&)dst = __ldcs((const uint16_t*)src);
@@ -313,8 +313,8 @@ inline __device__ void Ldcg(Array<T, N>& dst, const T* src)
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint2)) {
         (uint2&)dst = __ldcg((const uint2*)src);
     }
-    else if constexpr (sizeof(Array<T, N>) == sizeof(uint)) {
-        (uint&)dst = __ldcg((const uint*)src);
+    else if constexpr (sizeof(Array<T, N>) == sizeof(unsigned int)) {
+        (unsigned int&)dst = __ldcg((const unsigned int*)src);
     }
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint16_t)) {
         (uint16_t&)dst = __ldcg((const uint16_t*)src);
@@ -336,7 +336,7 @@ inline __device__ void Load(Array<T, N>& dst, const T* src)
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint2)) {
         (uint2&)dst = *(const uint2*)src;
     }
-    else if constexpr (sizeof(Array<T, N>) == sizeof(uint)) {
+    else if constexpr (sizeof(Array<T, N>) == sizeof(unsigned int)) {
         (uint1&)dst = *(const uint1*)src;
     }
     else if constexpr (sizeof(Array<T, N>) == sizeof(uint16_t)) {
@@ -378,8 +378,8 @@ inline __device__ void LdShared(Array<T, N>& dst, uint32_t uintptr)
         uint2& p = (uint2&)dst;
         asm volatile("ld.shared.v2.b32 {%0,%1}, [%2];\n" : "=r"(p.x), "=r"(p.y) : "r"(uintptr));
     }
-    else if constexpr (sizeof(Array<T, N>) == sizeof(uint)) {
-        uint& p = (uint&)dst;
+    else if constexpr (sizeof(Array<T, N>) == sizeof(unsigned int)) {
+        unsigned int& p = (unsigned int&)dst;
         asm volatile("ld.shared.b32 %0, [%1];\n" : "=r"(p) : "r"(uintptr));
     }
     else {
@@ -401,8 +401,8 @@ inline __device__ void StShared(uint32_t uintptr, Array<T, N>& src)
         uint2& p = (uint2&)src;
         asm volatile("st.shared.v2.b32 [%0], {%1,%2};\n" ::"r"(uintptr), "r"(p.x), "r"(p.y));
     }
-    else if constexpr (sizeof(Array<T, N>) == sizeof(uint)) {
-        uint& p = (uint&)src;
+    else if constexpr (sizeof(Array<T, N>) == sizeof(unsigned int)) {
+        unsigned int& p = (unsigned int&)src;
         asm volatile("st.shared.b32  [%0], %1;\n" ::"r"(uintptr), "r"(p));
     }
     else {
@@ -451,12 +451,12 @@ __device__ void CpAsync(T* dst, const Array<T, N>* __restrict__ src)
 #endif
 }
 
-__inline__ __device__ uint transpose_m8n8_b16_warp_shuffle(uint value)
+__inline__ __device__ unsigned int transpose_m8n8_b16_warp_shuffle(unsigned int value)
 {
     const int lane_id  = threadIdx.x % WARP_SIZE;
     int       src_lane = lane_id / 8 + lane_id % 4 * 8;
-    uint      u0       = __shfl_sync(0xffffffff, value, src_lane);
-    uint      u1       = __shfl_sync(0xffffffff, value, src_lane + 4);
+    unsigned int      u0       = __shfl_sync(0xffffffff, value, src_lane);
+    unsigned int      u1       = __shfl_sync(0xffffffff, value, src_lane + 4);
     short2    r;
 
     if (lane_id % 8 < 4) {
@@ -467,14 +467,14 @@ __inline__ __device__ uint transpose_m8n8_b16_warp_shuffle(uint value)
         r.x = ((short2&)u0).y;
         r.y = ((short2&)u1).y;
     }
-    return (uint&)r;
+    return (unsigned int&)r;
 }
 
 #if (__CUDACC_VER_MAJOR__ >= 11) && (__CUDACC_VER_MINOR__ >= 8)
-__inline__ __device__ uint transpose_m8n8_b16_movmatrix(uint a)
+__inline__ __device__ unsigned int transpose_m8n8_b16_movmatrix(unsigned int a)
 {
 #if TURBOMIND_ARCH_SM75
-    uint d;
+    unsigned int d;
     asm volatile("movmatrix.sync.aligned.m8n8.trans.b16 %0, %1;\n" : "=r"(d) : "r"(a));
     return d;
 #else

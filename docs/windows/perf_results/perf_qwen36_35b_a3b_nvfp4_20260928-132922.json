@@ -1,0 +1,22 @@
+﻿{
+    "timestamp":  "2026-09-28T13:29:22.4948480+03:00",
+    "model":  "C:\\Users\\Chugumoto\\.cache\\huggingface\\hub\\models--nvidia--Qwen3.6-35B-A3B-NVFP4\\manual",
+    "host":  "127.0.0.1",
+    "port":  8005,
+    "dtype":  "float16",
+    "kv_cache_dtype":  "fp8_e5m2",
+    "max_model_len":  4096,
+    "max_num_batched_tokens":  4096,
+    "gpu_memory_utilization":  0.9,
+    "attention_backend":  "FLASH_ATTN_V100",
+    "mtp_enabled":  true,
+    "mtp_num_tokens":  1,
+    "speculative_config":  "{\"method\":\"mtp\",\"num_speculative_tokens\":1}",
+    "max_tokens":  256,
+    "completion_tokens":  256,
+    "wall_seconds":  4.2273,
+    "e2e_output_tok_s":  60.559,
+    "metric":  "e2e_output_tok_s",
+    "floor_applied":  0,
+    "sample_text":  "\n\n\u003cthink\u003e\nHere\u0027s a thinking process:\n\n1.  **Analyze User Input:**\n   - **Topic:** NVIDIA Tesla V100\n   - **Context:** Machine learning inference\n   - **Format:** Short technical paragraph\n   - **Key Requirements:** Explain its use/purpose in ML inference, maintain technical accuracy, keep it concise.\n\n2.  **Identify Key Technical Facts about Tesla V100:**\n   - Architecture: Volta (GV100)\n   - Key features: Tensor Cores (first generation), HBM2 memory, NVLink support\n   - Performance: High FP16/FP32/INT8 throughput, optimized for AI workloads\n   - Use case: Data center GPU, widely used for training and inference\n   - Inference specifics: Tensor Cores accelerate mixed-precision inference, supports FP16, FP32, INT8, INT4; high memory bandwidth reduces latency; NVLink enables multi-GPU scaling; widely deployed in production AI services.\n\n3.  **Focus on Inference Context:**\n   - Inference is about serving trained models to make predictions with low latency and high throughput.\n   - V100\u0027s Tensor Cores"
+}

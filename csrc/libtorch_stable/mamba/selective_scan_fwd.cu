@@ -4,6 +4,10 @@
 #include <torch/csrc/stable/macros.h>
 #include "selective_scan.h"
 
+#ifndef M_LOG2E
+#define M_LOG2E 1.44269504088896340736
+#endif
+
 #ifndef USE_ROCM
     #include <cub/block/block_load.cuh>
     #include <cub/block/block_store.cuh>
@@ -15,6 +19,22 @@
 
 #include "selective_scan.h"
 #include "static_switch.h"
+
+// Helper at file scope so preprocessor directives are not inside a lambda
+// (MSVC rejects #ifdef embedded in lambdas).
+template <typename KernelT>
+void set_max_dynamic_shared_memory(KernelT kernel, int kSmemSize) {
+    if (kSmemSize >= 48 * 1024) {
+#ifdef USE_ROCM
+        STD_CUDA_CHECK(hipFuncSetAttribute(
+            reinterpret_cast<const void*>(kernel),
+            hipFuncAttributeMaxDynamicSharedMemorySize, kSmemSize));
+#else
+        STD_CUDA_CHECK(cudaFuncSetAttribute(
+            kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, kSmemSize));
+#endif
+    }
+}
 
 template<int kNThreads_, int kNItems_, int kNRows_, bool kIsEvenLen_,
          bool kIsVariableB_, bool kIsVariableC_,
@@ -405,15 +425,7 @@ void selective_scan_fwd_launch(SSMParamsBase &params, cudaStream_t stream) {
                 constexpr int kSmemSize = Ktraits::kSmemSize + kNRows * MAX_DSTATE * sizeof(typename Ktraits::scan_t);
                 dim3 grid(params.batch, params.dim / kNRows);
                 auto kernel = &selective_scan_fwd_kernel<Ktraits>;
-                if (kSmemSize >= 48 * 1024) {
-#ifdef USE_ROCM
-                    STD_CUDA_CHECK(hipFuncSetAttribute(
-                        reinterpret_cast<const void*>(kernel), hipFuncAttributeMaxDynamicSharedMemorySize, kSmemSize));
-#else
-                    STD_CUDA_CHECK(cudaFuncSetAttribute(
-                        kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, kSmemSize));
-#endif
-                }
+                set_max_dynamic_shared_memory(kernel, kSmemSize);
                 kernel<<<grid, Ktraits::kNThreads, kSmemSize, stream>>>(params);
                 STD_CUDA_KERNEL_LAUNCH_CHECK();
             });

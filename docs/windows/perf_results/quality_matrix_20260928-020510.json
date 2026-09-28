@@ -1,0 +1,47 @@
+﻿{
+    "timestamp":  "2026-09-28T02:05:10.0028264+03:00",
+    "all_passed":  false,
+    "models":  [
+                   {
+                       "model":  "QuantTrio/Qwen3.5-9B-AWQ",
+                       "port":  8001,
+                       "max_model_len":  8192,
+                       "passed":  false,
+                       "error":  "Удаленный сервер возвратил ошибку: (400) Недопустимый запрос.",
+                       "prompts":  [
+                                       {
+                                           "prompt":  "Say hello in one short sentence.",
+                                           "text":  "\n\nHello! How can I help you today?",
+                                           "passed":  true,
+                                           "failure":  null
+                                       },
+                                       {
+                                           "prompt":  "What is 2+2? Answer with a single number.",
+                                           "text":  "\n\n4",
+                                           "passed":  true,
+                                           "failure":  null
+                                       }
+                                   ]
+                   },
+                   {
+                       "model":  "QuantTrio/Qwen3.6-27B-AWQ",
+                       "port":  8002,
+                       "max_model_len":  4096,
+                       "passed":  false,
+                       "error":  "quality smoke timed out waiting for server",
+                       "prompts":  [
+
+                                   ]
+                   },
+                   {
+                       "model":  "QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4",
+                       "port":  8003,
+                       "max_model_len":  2048,
+                       "passed":  false,
+                       "error":  "quality smoke timed out waiting for server",
+                       "prompts":  [
+
+                                   ]
+                   }
+               ]
+}

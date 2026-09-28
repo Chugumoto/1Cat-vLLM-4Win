@@ -4,6 +4,7 @@ import argparse
 import contextlib
 import json
 import multiprocessing
+import platform
 import threading
 import time
 import weakref
@@ -23,8 +24,9 @@ from typing import (
 )
 
 import torch
-import uvloop
 from torch.autograd.profiler import record_function
+
+from vllm.utils.uvloop_compat import uvloop_impl
 
 import vllm.envs as envs
 from vllm.logger import init_logger
@@ -193,8 +195,9 @@ def get_engine_client_zmq_addr(
     """Return an IPC path (``local_only=True``) or ``tcp://host:port``.
 
     ``port=0`` lets the kernel assign the port at ``bind()`` time; the
-    caller must recover it via ``getsockopt(zmq.LAST_ENDPOINT)``."""
-    if local_only:
+    caller must recover it via ``getsockopt(zmq.LAST_ENDPOINT)``.
+    Windows has no ZMQ ``ipc://`` support, so always use TCP there."""
+    if local_only and platform.system() != "Windows":
         return get_open_zmq_ipc_path()
     return get_tcp_uri(host, port)
 
@@ -512,7 +515,7 @@ def run_api_server_worker_proc(
     set_process_title("APIServer", str(server_index))
     decorate_logs()
 
-    uvloop.run(
+    uvloop_impl.run(
         run_server_worker(listen_address, sock, args, client_config, **uvicorn_kwargs)
     )
 

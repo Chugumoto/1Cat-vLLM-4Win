@@ -497,9 +497,26 @@ class GroupCoordinator:
             # a group with `gloo` backend, to allow direct coordination between
             # processes through the CPU.
             with suppress_stdout():
-                cpu_group = torch.distributed.new_group(
-                    ranks, backend="gloo", timeout=timeout
-                )
+                try:
+                    cpu_group = torch.distributed.new_group(
+                        ranks, backend="gloo", timeout=timeout
+                    )
+                except RuntimeError as e:
+                    import platform
+
+                    if (
+                        platform.system() == "Windows"
+                        and "unsupported gloo device" in str(e)
+                    ):
+                        # Reuse the device group backend when gloo cannot bind
+                        # a NIC (common with Hyper-V/VPN hostnames on Windows).
+                        cpu_group = torch.distributed.new_group(
+                            ranks,
+                            backend=torch_distributed_backend,
+                            timeout=timeout,
+                        )
+                    else:
+                        raise
             if self.rank in ranks:
                 self.ranks = ranks
                 self.world_size = len(ranks)
@@ -1816,14 +1833,49 @@ def init_distributed_environment(
                 "Fallback Gloo backend is not available."
             )
             backend = "gloo"
-        # this backend is used for WORLD
-        torch.distributed.init_process_group(
-            backend=backend,
-            init_method=distributed_init_method,
-            world_size=world_size,
-            rank=rank,
-            timeout=timeout,
-        )
+        store = None
+        if distributed_init_method.startswith("file://"):
+            store = torch.distributed.FileStore(
+                distributed_init_method.removeprefix("file://"), world_size
+            )
+        try:
+            # this backend is used for WORLD
+            torch.distributed.init_process_group(
+                backend=backend,
+                init_method=distributed_init_method if store is None else None,
+                store=store,
+                world_size=world_size,
+                rank=rank,
+                timeout=timeout,
+            )
+        except RuntimeError as e:
+            # Windows+gloo often fails with "unsupported gloo device" when the
+            # hostname maps to Hyper-V/VPN adapters. For single-process MVP,
+            # fall back to torch's fake process group (no real networking).
+            import platform
+
+            if (
+                platform.system() == "Windows"
+                and world_size == 1
+                and "unsupported gloo device" in str(e)
+            ):
+                logger.warning(
+                    "Gloo init failed on Windows (%s); "
+                    "using fake process group for world_size=1.",
+                    e,
+                )
+                from torch.testing._internal.distributed.fake_pg import FakeStore
+
+                torch.distributed.init_process_group(
+                    backend="fake",
+                    store=FakeStore(),
+                    world_size=world_size,
+                    rank=rank,
+                    timeout=timeout,
+                )
+                backend = "fake"
+            else:
+                raise
         if enable_elastic_ep:
             tp_pp_cpu_group = torch.distributed.new_group(
                 backend="gloo", timeout=timeout

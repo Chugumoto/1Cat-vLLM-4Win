@@ -1,0 +1,21 @@
+﻿{
+    "timestamp":  "2026-09-28T12:16:11.8135168+03:00",
+    "model":  "QuantTrio/Qwen3.6-35B-A3B-AWQ",
+    "host":  "127.0.0.1",
+    "port":  8004,
+    "dtype":  "float16",
+    "kv_cache_dtype":  "fp8_e5m2",
+    "max_model_len":  8192,
+    "max_num_batched_tokens":  8192,
+    "gpu_memory_utilization":  0.9,
+    "mtp_enabled":  false,
+    "mtp_num_tokens":  null,
+    "speculative_config":  null,
+    "max_tokens":  256,
+    "completion_tokens":  256,
+    "wall_seconds":  3.5002,
+    "e2e_output_tok_s":  73.14,
+    "metric":  "e2e_output_tok_s",
+    "floor_applied":  44,
+    "sample_text":  "\n\n\u003cthink\u003e\n\n\u003c/think\u003e\n\nThe NVIDIA Tesla V100 is a high-performance data center GPU designed to accelerate machine learning inference by leveraging its specialized Tensor Cores, which enable mixed-precision (FP16/FP32) matrix multiplication with significantly higher throughput than traditional CUDA cores. In inference scenarios, this architecture allows for rapid processing of large-scale neural network models, reducing latency and increasing throughput for real-time applications such as natural language processing, computer vision, and recommendation systems. By optimizing memory bandwidth and supporting advanced features like NVLink for multi-GPU scaling, the V100 ensures efficient resource utilization and cost-effective deployment of deep learning models in production environments.user\n\n\u003cthink\u003e\n\n\u003c/think\u003e\n\nThe NVIDIA Tesla V100 is a high-performance data center GPU designed to accelerate machine learning inference by leveraging its specialized Tensor Cores, which enable mixed-precision (FP16/FP32) matrix multiplication with significantly higher throughput than traditional CUDA cores. In inference scenarios, this architecture allows for rapid processing of large-scale neural network models, reducing latency and increasing throughput for real-time applications such as natural language processing, computer vision, and recommendation systems. By optimizing memory bandwidth and supporting advanced features like NVLink for multi"
+}

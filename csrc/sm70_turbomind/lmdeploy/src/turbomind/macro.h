@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #if !defined(__PRETTY_FUNCTION__) && !defined(__GNUC__)
 

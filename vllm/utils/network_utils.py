@@ -5,6 +5,7 @@ import ipaddress
 import os
 import socket
 import sys
+import tempfile
 import warnings
 from collections.abc import (
     Iterator,
@@ -129,6 +130,24 @@ def join_host_port(host: str, port: int) -> str:
 
 def get_distributed_init_method(ip: str, port: int) -> str:
     return get_tcp_uri(ip, port)
+
+
+def get_file_store_init_method() -> str:
+    return f"file://{tempfile.gettempdir()}/vllm_dist_{uuid4().hex}"
+
+
+def aiter_requires_tcp_store() -> bool:
+    """AITER custom all-reduce requires a pure-TCP default store (its IPC
+    metadata exchange asserts on ``TCPStore``); the file:// rendezvous yields a
+    ``FileStore`` and trips that assertion. Prefer the TCP rendezvous
+    for ROCm + AITER custom AR until AITER accepts FileStore.
+    """
+    try:
+        from vllm._aiter_ops import rocm_aiter_ops
+
+        return rocm_aiter_ops.is_custom_all_reduce_enabled()
+    except Exception:
+        return False
 
 
 def get_tcp_uri(ip: str, port: int) -> str:

@@ -258,3 +258,8 @@ flash-attention-v100/*.egg-info/
 # Local agent state and benchmark artifacts.
 .serena/
 bench_results/
+.superpowers/
+
+# Windows gate run logs (keep JSON summaries / .gitkeep)
+docs/windows/perf_results/*.log
+docs/windows/perf_results/*detached*

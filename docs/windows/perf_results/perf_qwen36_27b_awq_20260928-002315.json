@@ -1,0 +1,17 @@
+﻿{
+    "timestamp":  "2026-09-28T00:23:15.5881341+03:00",
+    "model":  "QuantTrio/Qwen3.6-27B-AWQ",
+    "host":  "127.0.0.1",
+    "port":  8002,
+    "dtype":  "float16",
+    "kv_cache_dtype":  "fp8_e5m2",
+    "max_model_len":  4096,
+    "gpu_memory_utilization":  0.9,
+    "max_tokens":  256,
+    "completion_tokens":  256,
+    "wall_seconds":  8.7469,
+    "e2e_output_tok_s":  29.267,
+    "metric":  "e2e_output_tok_s",
+    "floor_applied":  20,
+    "sample_text":  "\n\n\u003cthink\u003e\nHere\u0027s a thinking process:\n\n1.  **Analyze User Request:**\n   - **Topic:** NVIDIA Tesla V100\n   - **Context:** Machine learning inference\n   - **Format:** Short technical paragraph\n   - **Key Requirements:** Explain what it\u0027s used for in ML inference, keep it technical but concise, focus on inference specifically.\n\n2.  **Identify Key Technical Facts about V100:**\n   - Architecture: Volta (first to introduce Tensor Cores)\n   - Memory: HBM2 (high bandwidth memory), typically 16GB or 32GB\n   - Performance: High FP16/FP32 throughput, Tensor Core acceleration for mixed precision\n   - Use cases: Training and inference, but specifically for inference: low latency, high throughput, supports frameworks like TensorRT, ONNX, PyTorch, TensorFlow\n   - Features relevant to inference: TensorRT optimization, multi-instance GPU (MIG) support (actually MIG is more A100, but V100 has some partitioning capabilities? Wait, MIG is A100/H100. V100 doesn\u0027t have MIG. I should avoid mentioning MIG to stay"
+}

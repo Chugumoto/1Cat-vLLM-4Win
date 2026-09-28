@@ -11,7 +11,7 @@ import warnings
 from typing import Any
 
 import torch
-import uvloop
+from vllm.utils.uvloop_compat import uvloop_impl
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, PreTrainedTokenizerBase
 
@@ -1118,7 +1118,7 @@ def main(args: argparse.Namespace):
     request_outputs: list[RequestOutput] | None = None
     if args.backend == "vllm":
         if args.async_engine:
-            elapsed_time = uvloop.run(
+            elapsed_time = uvloop_impl.run(
                 run_vllm_async(
                     requests,
                     args.n,

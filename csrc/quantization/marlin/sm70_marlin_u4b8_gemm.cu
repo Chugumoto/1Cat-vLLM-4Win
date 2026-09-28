@@ -518,10 +518,10 @@ torch::Tensor launch_sm70_marlin_u4b8_gemm(torch::Tensor& a, torch::Tensor& c,
   if (requested_split_k == 1) {
     dim3 grid = sm70_marlin_cta_grid(size_m, size_n, CtaM, CtaN);
     kernel<<<grid, block, smem_bytes, stream>>>(
-        reinterpret_cast<cutlass::half_t const*>(a.data_ptr<at::Half>()),
-        reinterpret_cast<uint32_t const*>(b_q_weight.data_ptr<int32_t>()),
-        reinterpret_cast<cutlass::half_t const*>(b_scales.data_ptr<at::Half>()),
-        reinterpret_cast<cutlass::half_t*>(c.data_ptr<at::Half>()),
+        reinterpret_cast<cutlass::half_t const*>(a.template data_ptr<at::Half>()),
+        reinterpret_cast<uint32_t const*>(b_q_weight.template data_ptr<int32_t>()),
+        reinterpret_cast<cutlass::half_t const*>(b_scales.template data_ptr<at::Half>()),
+        reinterpret_cast<cutlass::half_t*>(c.template data_ptr<at::Half>()),
         static_cast<int>(size_m), static_cast<int>(size_n),
         static_cast<int>(size_k), static_cast<int>(a.stride(0)));
     C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -550,11 +550,11 @@ torch::Tensor launch_sm70_marlin_u4b8_gemm(torch::Tensor& a, torch::Tensor& c,
       sm70_active_split_k(static_cast<int>(size_k), requested_split_k, CtaK);
   grid.z = static_cast<unsigned>(active_split_k);
   split_kernel<<<grid, block, smem_bytes, stream>>>(
-      reinterpret_cast<cutlass::half_t const*>(a.data_ptr<at::Half>()),
-      reinterpret_cast<uint32_t const*>(b_q_weight.data_ptr<int32_t>()),
-      reinterpret_cast<cutlass::half_t const*>(b_scales.data_ptr<at::Half>()),
-      reinterpret_cast<cutlass::half_t*>(c.data_ptr<at::Half>()),
-      c32.data_ptr<float>(), static_cast<int>(size_m), static_cast<int>(size_n),
+      reinterpret_cast<cutlass::half_t const*>(a.template data_ptr<at::Half>()),
+      reinterpret_cast<uint32_t const*>(b_q_weight.template data_ptr<int32_t>()),
+      reinterpret_cast<cutlass::half_t const*>(b_scales.template data_ptr<at::Half>()),
+      reinterpret_cast<cutlass::half_t*>(c.template data_ptr<at::Half>()),
+      c32.template data_ptr<float>(), static_cast<int>(size_m), static_cast<int>(size_n),
       static_cast<int>(size_k), static_cast<int>(a.stride(0)),
       requested_split_k);
   C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -564,7 +564,7 @@ torch::Tensor launch_sm70_marlin_u4b8_gemm(torch::Tensor& a, torch::Tensor& c,
   int const narrow_grid =
       static_cast<int>((numel + narrow_block - 1) / narrow_block);
   sm70_marlin_narrow_f32_to_f16<256><<<narrow_grid, narrow_block, 0, stream>>>(
-      c32.data_ptr<float>(), reinterpret_cast<half*>(c.data_ptr<at::Half>()),
+      c32.template data_ptr<float>(), reinterpret_cast<half*>(c.template data_ptr<at::Half>()),
       numel);
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 

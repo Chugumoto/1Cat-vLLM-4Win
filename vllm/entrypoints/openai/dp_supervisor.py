@@ -19,7 +19,7 @@ from multiprocessing.process import BaseProcess
 import aiohttp
 import psutil
 import uvicorn
-import uvloop
+from vllm.utils.uvloop_compat import uvloop_impl
 from fastapi import FastAPI, Response
 
 from vllm.logger import init_logger
@@ -235,7 +235,7 @@ def _run_vllm_dp_server(
     update_environment_variables(env_updates)
     set_process_title(name)
     decorate_logs(name)
-    uvloop.run(run_server(child_args))
+    uvloop_impl.run(run_server(child_args))
 
 
 class DPSupervisor:
@@ -490,4 +490,4 @@ class DPSupervisor:
 
 
 def run_dp_supervisor(args: argparse.Namespace) -> None:
-    uvloop.run(DPSupervisor(args).run())
+    uvloop_impl.run(DPSupervisor(args).run())

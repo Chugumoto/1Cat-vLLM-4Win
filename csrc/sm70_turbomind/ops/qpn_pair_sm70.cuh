@@ -120,14 +120,14 @@ void launch_qpn_pair_m16(torch::Tensor out, torch::Tensor input,
         cudaFuncAttributeMaxDynamicSharedMemorySize, kShared));
   }
   auto packed = torch::empty_like(input);
-  auto* a = reinterpret_cast<half*>(packed.data_ptr<at::Half>());
+  auto* a = reinterpret_cast<half*>(packed.template data_ptr<at::Half>());
   pack_k16_input<<<(input.numel() / 2 + 255) / 256, 256, 0, stream>>>(
-      reinterpret_cast<const half*>(input.data_ptr<at::Half>()), a,
+      reinterpret_cast<const half*>(input.template data_ptr<at::Half>()), a,
       input.size(0), input.size(1));
   qpn_pair_m16_kernel<Reader, Split, Gated>
       <<<out.size(1) / (Gated ? 32 : 64), 32 * Split, kShared, stream>>>(
           reinterpret_cast<const uint8_t*>(codes.data_ptr()), scales.data_ptr(),
-          a, reinterpret_cast<half*>(out.data_ptr<at::Half>()), out.size(1),
+          a, reinterpret_cast<half*>(out.template data_ptr<at::Half>()), out.size(1),
           input.size(1), input.size(0), global_scale);
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }

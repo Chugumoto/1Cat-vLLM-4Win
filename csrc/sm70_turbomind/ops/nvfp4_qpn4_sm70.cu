@@ -600,15 +600,15 @@ void nvfp4_qpn4_dequantize_sm70_impl(torch::Tensor out, torch::Tensor codes,
   if (use_scale_code) {
     nvfp4_qpn4_dequantize_sm70_kernel<true, TurboMindLayout>
         <<<blocks, kPrepareThreads, 0, at::cuda::getCurrentCUDAStream()>>>(
-            reinterpret_cast<half*>(out.data_ptr<at::Half>()),
-            codes.data_ptr<uint8_t>(), scales.data_ptr<uint8_t>(),
+            reinterpret_cast<half*>(out.template data_ptr<at::Half>()),
+            codes.template data_ptr<uint8_t>(), scales.template data_ptr<uint8_t>(),
             split_scale.hi, split_scale.lo, static_cast<int>(n),
             static_cast<int>(k));
   } else {
     nvfp4_qpn4_dequantize_sm70_kernel<false, TurboMindLayout>
         <<<blocks, kPrepareThreads, 0, at::cuda::getCurrentCUDAStream()>>>(
-            reinterpret_cast<half*>(out.data_ptr<at::Half>()),
-            codes.data_ptr<uint8_t>(), scales.data_ptr<at::Half>(), zero_scale,
+            reinterpret_cast<half*>(out.template data_ptr<at::Half>()),
+            codes.template data_ptr<uint8_t>(), scales.template data_ptr<at::Half>(), zero_scale,
             zero_scale, static_cast<int>(n), static_cast<int>(k));
   }
   C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -663,8 +663,8 @@ void nvfp4_qpn4_prefill_sm70_impl(torch::Tensor out, int64_t dense_weight_ptr,
   constexpr int kThreads = 256;
   nvfp4_qpn4_silu_and_mul_sm70_kernel<<<static_cast<int>(m), kThreads, 0,
                                         at::cuda::getCurrentCUDAStream()>>>(
-      reinterpret_cast<half*>(out.data_ptr<at::Half>()),
-      reinterpret_cast<const half*>(gate_up.data_ptr<at::Half>()),
+      reinterpret_cast<half*>(out.template data_ptr<at::Half>()),
+      reinterpret_cast<const half*>(gate_up.template data_ptr<at::Half>()),
       static_cast<int>(m), static_cast<int>(n / 2));
   C10_CUDA_KERNEL_LAUNCH_CHECK();
 }

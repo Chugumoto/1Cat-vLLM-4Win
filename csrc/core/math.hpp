@@ -1,11 +1,19 @@
 #pragma once
 
 #include <climits>
+#include <cstdint>
 #include <iostream>
 
 inline constexpr uint32_t next_pow_2(uint32_t const num) {
   if (num <= 1) return num;
-  return 1 << (CHAR_BIT * sizeof(num) - __builtin_clz(num - 1));
+  // Portable bit-smear (no GCC __builtin_clz / <bit> device issues).
+  uint32_t v = num - 1;
+  v |= v >> 1;
+  v |= v >> 2;
+  v |= v >> 4;
+  v |= v >> 8;
+  v |= v >> 16;
+  return v + 1;
 }
 
 template <typename A, typename B>

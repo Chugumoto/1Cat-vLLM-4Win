@@ -1,7 +1,11 @@
-#include <cuda.h>
+﻿#include <cuda.h>
 #include <cuda_fp16.h>
 #include <cuda_runtime.h>
+#if defined(_MSC_VER)
+#include "torch_cuda_compat.h"
+#else
 #include <torch/extension.h>
+#endif
 
 #include <cmath>
 

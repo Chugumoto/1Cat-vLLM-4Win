@@ -1,6 +1,7 @@
 #include <cuda.h>
 #include <torch/csrc/stable/tensor.h>
 
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 #include "../cuda_compat.h"

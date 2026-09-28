@@ -1,7 +1,11 @@
-#include <cuda.h>
+﻿#include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
+#if defined(_MSC_VER)
+#include "torch_cuda_compat.h"
+#else
 #include <torch/extension.h>
+#endif
 
 __global__ void paged_to_contiguous_stride_aware_kernel(
     const __half* __restrict__ paged_cache, const int* __restrict__ block_table,
@@ -171,11 +175,4 @@ std::vector<torch::Tensor> paged_kv_to_contiguous(
       max_num_blocks);
 
   return {contiguous_key, contiguous_value};
-}
-
-PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-  m.def("paged_to_contiguous", &paged_to_contiguous,
-        "Paged KV Cache to Contiguous (Stride-Aware)");
-  m.def("paged_kv_to_contiguous", &paged_kv_to_contiguous,
-        "Paged KV Cache to Contiguous K/V Pair (Stride-Aware)");
 }

@@ -21,11 +21,12 @@ nvidia-cudnn-frontend>=1.13.0,<1.19.0
 fastsafetensors >= 0.3.3
 
 # QuACK and Cutlass DSL for FA4 (cute-DSL implementation)
-nvidia-cutlass-dsl[cu13]==4.7.0
+# Windows CUDA 12.8 MVP: CUDA 13-only extras are unavailable/incompatible.
+# nvidia-cutlass-dsl[cu13]==4.7.0
 quack-kernels>=0.3.3
 
 # TokenSpeed MLA is optional. Version 0.2.5 pins apache-tvm-ffi==0.1.13,
 # which cannot coexist with the TileLang version pinned above.
 
 # Humming kernels for quantization gemm
-humming-kernels[cu13]==0.1.2
+# humming-kernels[cu13]==0.1.2

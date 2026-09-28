@@ -74,12 +74,21 @@ def _load_ext():
         ) from exc
 
     src = Path(__file__).with_name("csrc") / "gdn_forward.cu"
+    api_src = Path(__file__).with_name("csrc") / "gdn_api.cpp"
+    cuda_flags = [*_SM70_GENCODE_FLAGS]
+    cxx_flags: list[str] = []
+    if os.name == "nt":
+        cuda_flags.extend(["-Xcompiler=/O2", "-Xcompiler=/Zc:__cplusplus"])
+        cxx_flags.append("/O2")
+    else:
+        cuda_flags.insert(0, "-O3")
+        cxx_flags.append("-O3")
     try:
         _EXT = load(
             name="flash_qla_sm70_gdn_strided",
-            sources=[str(src)],
-            extra_cuda_cflags=["-O3", *_SM70_GENCODE_FLAGS],
-            extra_cflags=["-O3"],
+            sources=[str(src), str(api_src)],
+            extra_cuda_cflags=cuda_flags,
+            extra_cflags=cxx_flags,
             verbose=bool(int(os.environ.get("FLASH_QLA_SM70_VERBOSE_BUILD", "0"))),
         )
     except Exception as exc:

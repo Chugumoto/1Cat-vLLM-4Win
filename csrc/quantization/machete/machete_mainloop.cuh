@@ -250,7 +250,7 @@ struct MacheteCollectiveMma {
   using SmemCopyAtomScale = Copy_Atom<cute::DefaultCopy, NonVoidElementScale>;
 
   // TMA converts f32 input to tf32 when copying from GMEM to SMEM
-  // For all other types, cast to size equivalent uint type to avoid any
+  // For all other types, cast to size equivalent unsigned int type to avoid any
   // rounding by TMA.
   static constexpr bool ConvertF32toTF32A = cute::is_same_v<float, ElementA>;
   static constexpr bool ConvertF32toTF32B = cute::is_same_v<float, ElementB>;

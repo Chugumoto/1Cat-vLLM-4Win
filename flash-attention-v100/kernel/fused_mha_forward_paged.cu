@@ -1,7 +1,11 @@
-#include <cuda.h>
+﻿#include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
+#if defined(_MSC_VER)
+#include "torch_cuda_compat.h"
+#else
 #include <torch/extension.h>
+#endif
 #include <algorithm>
 #include <climits>
 #include <cstddef>
@@ -1276,14 +1280,14 @@ __global__ void __launch_bounds__(
           min(softmax_sub_tile, valid_k_rows - sub_start);
 
       // ================================================================
-      // Patch 0108 (surgical) — sS/sP union race fix, D-conditional.
+      // Patch 0108 (surgical) вЂ” sS/sP union race fix, D-conditional.
       // ISSUE-0007 / issues/0090. The race (W(__half2) P-commit racing
       // R(float4) sS reads with no cross-warp barrier) exists ONLY for
       // D != 256, where sP = reuse_sp.p aliases sS byte-for-byte.
       //
       // D == 256 is race-IMMUNE: sP = p_strict, a SEPARATE buffer
       // (SmemLayout::p_strict, line ~134; selected at line ~491). So the
-      // D==256 arm below is the ORIGINAL monolithic block VERBATIM — no
+      // D==256 arm below is the ORIGINAL monolithic block VERBATIM вЂ” no
       // barrier, no variable hoisting. This is the ONLY difference from
       // archived/patches/0011: 0011 split the guard and hoisted vars for
       // EVERY D, which perturbed the D=256 register/spill allocation and
@@ -1451,15 +1455,15 @@ __global__ void __launch_bounds__(
       } else {
         // ----------------------------------------------------------------
         // ISSUE-0007 race-class fix (patch 0011,
-        // patches/0011-paged-race-fix-issue0007/ — PoC: poc/race_poc.cu).
+        // patches/0011-paged-race-fix-issue0007/ вЂ” PoC: poc/race_poc.cu).
         //
         // For D != 256, sP aliases sS byte-for-byte (union reuse_sp;
         // sP = reuse_sp.p selected above with p_stride == S_STRIDE). The
         // softmax phase reads sS as float4 (max pass, exp pass, scalar
         // tail) and then commits P into the SAME union bytes as
         // __half2/__half. Row r's half P row occupies union bytes
-        // [2*S_STRIDE*r, +2*S_STRIDE) — inside the FLOAT score row of row
-        // r/2 — so the P commit of warp w lands exactly on the score row
+        // [2*S_STRIDE*r, +2*S_STRIDE) вЂ” inside the FLOAT score row of row
+        // r/2 вЂ” so the P commit of warp w lands exactly on the score row
         // still being read as float4 by warp w/2. The register staging
         // (half_buffer) orders read-then-write only WITHIN one thread;
         // cross-warp there was NO ordering until the __syncthreads() at
@@ -1597,13 +1601,13 @@ __global__ void __launch_bounds__(
            // staged in registers (half_buffer / tail_col / tail_value).
 
         // ISSUE-0007 fix (patch 0011): THE one uniform __syncthreads()
-        // between the sS read phase and the sP commit phase — the only
+        // between the sS read phase and the sP commit phase вЂ” the only
         // behavioral change of this patch. UNIFORMITY: this point is at
         // the body scope of the sub_start loop; its trip count
         // (valid_k_rows, softmax_sub_tile) and every enclosing control
         // transfer (kernel early returns on blockIdx.z/M; block_n loop
         // break/continue on start_col/min_key_pos/bfla block mask) are
-        // block-uniform — the same uniformity the pre-existing
+        // block-uniform вЂ” the same uniformity the pre-existing
         // __syncthreads() at the end of this loop body already requires.
         // All threads of the block reach this barrier exactly once per
         // sub_start iteration. D == 256 is immune (sP = p_strict,

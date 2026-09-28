@@ -91,8 +91,25 @@ install(CODE "set(OLD_CMAKE_INSTALL_PREFIX \"\${CMAKE_INSTALL_PREFIX}\")" ALL_CO
 install(CODE "set(CMAKE_INSTALL_PREFIX \"\${CMAKE_INSTALL_PREFIX}/vllm/\")" ALL_COMPONENTS)
 
 # Fetch the vllm-flash-attn library
+if (WIN32)
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=/Zc:preprocessor")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:preprocessor")
+endif()
+
 FetchContent_MakeAvailable(vllm-flash-attn)
 message(STATUS "vllm-flash-attn is available at ${vllm-flash-attn_SOURCE_DIR}")
+
+if (WIN32)
+  foreach(_fa_tgt _vllm_fa2_C _vllm_fa3_C)
+    if(TARGET ${_fa_tgt})
+      target_compile_options(${_fa_tgt} PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/Zc:preprocessor>
+        $<$<COMPILE_LANGUAGE:CXX>:/Zc:preprocessor>
+      )
+    endif()
+  endforeach()
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/fix_cutlass_msvc.py ${vllm-flash-attn_SOURCE_DIR}/csrc/cutlass)
+endif()
 
 # Keep the precision-qualified SM70 prefill route in the parent repository.
 # Its private CUTLASS visitors have distinct types and do not modify the

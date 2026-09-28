@@ -3254,8 +3254,8 @@ void paged_attention_custom_launcher(
   T* query_ptr = reinterpret_cast<T*>(query.data_ptr());
   KVT* key_cache_ptr = reinterpret_cast<KVT*>(key_cache.data_ptr());
   KVT* value_cache_ptr = reinterpret_cast<KVT*>(value_cache.data_ptr());
-  int* block_tables_ptr = block_tables.data_ptr<int>();
-  int* seq_lens_ptr = seq_lens.data_ptr<int>();
+  int* block_tables_ptr = block_tables.template data_ptr<int>();
+  int* seq_lens_ptr = seq_lens.template data_ptr<int>();
   const float* k_scale_ptr = reinterpret_cast<const float*>(k_scale.data_ptr());
   const float* v_scale_ptr = reinterpret_cast<const float*>(v_scale.data_ptr());
   // NOTE: fp8_out_scale is optional.
@@ -3407,8 +3407,8 @@ void paged_attention_custom_launcher_navi(
   T* query_ptr = reinterpret_cast<T*>(query.data_ptr());
   KVT* key_cache_ptr = reinterpret_cast<KVT*>(key_cache.data_ptr());
   KVT* value_cache_ptr = reinterpret_cast<KVT*>(value_cache.data_ptr());
-  int* block_tables_ptr = block_tables.data_ptr<int>();
-  int* seq_lens_ptr = seq_lens.data_ptr<int>();
+  int* block_tables_ptr = block_tables.template data_ptr<int>();
+  int* seq_lens_ptr = seq_lens.template data_ptr<int>();
 
   const float* k_scale_ptr = reinterpret_cast<const float*>(k_scale.data_ptr());
   const float* v_scale_ptr = reinterpret_cast<const float*>(v_scale.data_ptr());

@@ -1,0 +1,87 @@
+﻿{
+    "timestamp":  "2026-09-28T02:21:24.6935859+03:00",
+    "all_passed":  true,
+    "models":  [
+                   {
+                       "model":  "QuantTrio/Qwen3.5-9B-AWQ",
+                       "port":  8001,
+                       "max_model_len":  8192,
+                       "passed":  true,
+                       "error":  null,
+                       "prompts":  [
+                                       {
+                                           "prompt":  "Say hello in one short sentence.",
+                                           "text":  "\n\nHello! How can I help you today?",
+                                           "passed":  true,
+                                           "failure":  null
+                                       },
+                                       {
+                                           "prompt":  "What is 2+2? Answer with a single number.",
+                                           "text":  "\n\n4",
+                                           "passed":  true,
+                                           "failure":  null
+                                       },
+                                       {
+                                           "prompt":  "РќР°Р·РѕРІРё СЃС‚РѕР»РёС†Сѓ Р¤СЂР°РЅС†РёРё РѕРґРЅРёРј СЃР»РѕРІРѕРј.",
+                                           "text":  "\n\n\u003cthink\u003e\nThinking Process:\n\n1.  **Analyze the Request:**\n    *   Task: Name the capital of France.\n    *   Language: Russian (\"Ð ÑÐ Â°Ð Â·Ð ÑÐ ÐÐ Ñ Ð¡ÐÐ¡âÐ ÑÐ Â»Ð ÑÐ¡â Ð¡Ñ Ð ",
+                                           "passed":  true,
+                                           "failure":  null
+                                       }
+                                   ]
+                   },
+                   {
+                       "model":  "QuantTrio/Qwen3.6-27B-AWQ",
+                       "port":  8002,
+                       "max_model_len":  4096,
+                       "passed":  true,
+                       "error":  null,
+                       "prompts":  [
+                                       {
+                                           "prompt":  "Say hello in one short sentence.",
+                                           "text":  "\n\n\u003cthink\u003e\nHere\u0027s a thinking process:\n\n1.  **Anassistant:\n1.  **Analyze User Input:**\n   - Request: \"Say hello in one short sentence.\"\n   - Constraints: Must be a greeting (\"hello\"), exactly one sentence, and short.\n\n2.  **",
+                                           "passed":  true,
+                                           "failure":  null
+                                       },
+                                       {
+                                           "prompt":  "What is 2+2? Answer with a single number.",
+                                           "text":  "\n\n\u003cthink\u003e\n\n\u003c/think\u003e\n\n4",
+                                           "passed":  true,
+                                           "failure":  null
+                                       },
+                                       {
+                                           "prompt":  "РќР°Р·РѕРІРё СЃС‚РѕР»РёС†Сѓ Р¤СЂР°РЅС†РёРё РѕРґРЅРёРј СЃР»РѕРІРѕРј.",
+                                           "text":  "\n\n\u003cthink\u003e\n\n\u003c/think\u003e\n\nÐÐ°ÑÐ¸Ð¶",
+                                           "passed":  true,
+                                           "failure":  null
+                                       }
+                                   ]
+                   },
+                   {
+                       "model":  "QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4",
+                       "port":  8003,
+                       "max_model_len":  2048,
+                       "passed":  true,
+                       "error":  null,
+                       "prompts":  [
+                                       {
+                                           "prompt":  "Say hello in one short sentence.",
+                                           "text":  "\n\nHello! How can I help you today?",
+                                           "passed":  true,
+                                           "failure":  null
+                                       },
+                                       {
+                                           "prompt":  "What is 2+2? Answer with a single number.",
+                                           "text":  "\n\n4",
+                                           "passed":  true,
+                                           "failure":  null
+                                       },
+                                       {
+                                           "prompt":  "РќР°Р·РѕРІРё СЃС‚РѕР»РёС†Сѓ Р¤СЂР°РЅС†РёРё РѕРґРЅРёРј СЃР»РѕРІРѕРј.",
+                                           "text":  "\n\n\u003cthink\u003e\nThe user is asking me to name the capital of France in one word. The capital of France is Paris. In Russian, it\u0027s \"ÐÐ°ÑÐ¸Ð¶\".\n\u003c/think\u003e\n\nÐ ÑÐ Â°Ð¡ÐÐ ÑÐ Â¶",
+                                           "passed":  true,
+                                           "failure":  null
+                                       }
+                                   ]
+                   }
+               ]
+}

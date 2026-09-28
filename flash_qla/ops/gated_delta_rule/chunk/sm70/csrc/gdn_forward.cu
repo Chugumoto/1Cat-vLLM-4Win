@@ -1,4 +1,8 @@
+#ifdef _MSC_VER
+#include "torch_cuda_compat.h"
+#else
 #include <torch/extension.h>
+#endif
 
 #include <ATen/cuda/CUDAContext.h>
 #include <c10/cuda/CUDAGuard.h>
@@ -1900,20 +1904,4 @@ void gdn_decode_mixed_qkv_ddtree_state(torch::Tensor mixed_qkv,
   }
 
   check_cuda(cudaGetLastError(), "gdn_decode_mixed_qkv_ddtree_state launch");
-}
-
-PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-  m.def("gdn_forward", &gdn_forward, "SM70/SM75 FlashQLA GDN forward");
-  m.def("gdn_forward_vlk_varlen",
-        &gdn_forward_vlk_varlen,
-        "SM70/SM75 FlashQLA GDN forward for vLLM [N,Hv,V,K] state");
-  m.def("gdn_decode_mixed_qkv_global_state",
-        &gdn_decode_mixed_qkv_global_state,
-        "SM70/SM75 FlashQLA fused mixed-QKV decode for vLLM global state");
-  m.def("gdn_decode_mixed_qkv_ddtree_state",
-        &gdn_decode_mixed_qkv_ddtree_state,
-        "SM70/SM75 FlashQLA mixed-QKV DDTree decode for vLLM global state");
-  m.def("resolve_column_groups_per_block",
-        &resolve_column_groups_per_block,
-        "Resolve SM70/SM75 FlashQLA GDN column groups per block");
 }

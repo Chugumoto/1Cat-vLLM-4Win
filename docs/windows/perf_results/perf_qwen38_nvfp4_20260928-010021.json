@@ -1,0 +1,20 @@
+﻿{
+    "timestamp":  "2026-09-28T01:00:21.7308521+03:00",
+    "model":  "QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4",
+    "host":  "127.0.0.1",
+    "port":  8003,
+    "dtype":  "float16",
+    "kv_cache_dtype":  "fp8_e5m2",
+    "max_model_len":  2048,
+    "gpu_memory_utilization":  0.9,
+    "attention_backend":  "FLASH_ATTN_V100",
+    "dflash2_enabled":  false,
+    "speculative_config":  null,
+    "max_tokens":  256,
+    "completion_tokens":  256,
+    "wall_seconds":  8.2717,
+    "e2e_output_tok_s":  30.949,
+    "metric":  "e2e_output_tok_s",
+    "floor_applied":  0,
+    "sample_text":  "\n\n\u003cthink\u003e\nThe user wants a short technical paragraph about NVIDIA Tesla V100 in the context of machine learning inference. Let me think about what\u0027s accurate and relevant:\n\n- Tesla V100 is a GPU based on the Volta architecture (released 2017)\n- It has 32GB or 16GB HBM2 memory\n- It features Tensor Cores (first generation) which accelerate matrix multiplication operations\n- For inference specifically: it\u0027s used to run trained models to generate predictions\n- It supports mixed-precision (FP16) inference via Tensor Cores, which can double throughput compared to FP32\n- It\u0027s used in data centers for serving ML models at scale\n- It supports frameworks like TensorFlow, PyTorch, and NVIDIA\u0027s TensorRT for optimized inference\n- It has NVLink for multi-GPU communication\n- It\u0027s been largely superseded by A100, H100, etc., but was a workhorse for a while\n\nLet me write a concise, technically accurate paragraph.\n\u003c/think\u003e\n\nThe NVIDIA Tesla V100, built on the Volta architecture, is a data-center GPU widely deployed for machine learning inference workloads. Its first-generation Tensor Cores"
+}

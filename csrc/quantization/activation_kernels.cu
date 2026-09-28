@@ -33,6 +33,15 @@ typedef __hip_fp8x4_e4m3_fnuz __nv_fp8x4_e4m3;
   #endif
 #endif
 
+// MSVC/Windows host toolchain has no GCC __int128_t / __int64_t.
+#if defined(_MSC_VER)
+struct alignas(16) __int128_t {
+  unsigned long long lo;
+  unsigned long long hi;
+};
+using __int64_t = long long;
+#endif
+
 #include "core/registration.h"
 namespace vllm {
 

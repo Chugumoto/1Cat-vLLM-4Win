@@ -1,7 +1,11 @@
-#include <cuda.h>
+﻿#include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
+#if defined(_MSC_VER)
+#include "torch_cuda_compat.h"
+#else
 #include <torch/extension.h>
+#endif
 
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
@@ -9,6 +13,11 @@
 
 #include <mma.h>
 using namespace nvcuda::wmma;
+
+#if defined(_MSC_VER)
+// CUDA's ushort alias is not always visible with MSVC as host compiler.
+using ushort = unsigned short;
+#endif
 
 #define WMMA_M 16
 #define WMMA_N 16

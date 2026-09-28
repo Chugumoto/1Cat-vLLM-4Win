@@ -106,7 +106,9 @@ def _maybe_load_sm70_sampler_library() -> None:
 
     library_path = os.getenv("VLLM_SM70_SAMPLER_LIBRARY")
     if library_path is None:
-        bundled = sorted(Path(__file__).resolve().parent.glob("_sm70_sampler_C*.so"))
+        bundled = sorted(
+            Path(__file__).resolve().parent.glob("_sm70_sampler_C*.so")
+        ) + sorted(Path(__file__).resolve().parent.glob("_sm70_sampler_C*.pyd"))
         if bundled:
             library_path = str(bundled[-1])
     if library_path is not None:

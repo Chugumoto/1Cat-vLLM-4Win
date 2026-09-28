@@ -178,8 +178,8 @@ void launch_sm70_sample_sorted_top20_philox(
 
   sm70_sample_sorted_top20_philox_kernel<EmitMetadata, ChunkedIndices>
       <<<1, kWarpSize, 0, at::cuda::getCurrentCUDAStream()>>>(
-          sampled_token_out.data_ptr<int64_t>(), sparse_ids_out,
-          sparse_probs_out, top_values.data_ptr<float>(), top_indices,
+          sampled_token_out.template data_ptr<int64_t>(), sparse_ids_out,
+          sparse_probs_out, top_values.template data_ptr<float>(), top_indices,
           local_indices, global_positions, local_candidate_count, chunk_size,
           vocab_size, total_threads, static_cast<float>(top_p), philox_args);
   C10_CUDA_KERNEL_LAUNCH_CHECK();

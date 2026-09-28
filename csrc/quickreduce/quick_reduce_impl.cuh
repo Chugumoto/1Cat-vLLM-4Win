@@ -173,10 +173,10 @@ struct CodecQ4 : public CodecBase {
       // Unpack q4 into f16x8_t
       int32x4_t w;
       {
-        static constexpr uint kMask000F = 0x000F000F;
-        static constexpr uint kHalf2_1024 =
+        static constexpr unsigned int kMask000F = 0x000F000F;
+        static constexpr unsigned int kHalf2_1024 =
             0x64006400;  // {1024.0, 1024.0}, fp16x2_t
-        static uint constexpr kHalf2_1032 =
+        static unsigned int constexpr kHalf2_1032 =
             0xE408E408;  // {-1032.0, -1032.0}, fp16x2_t
 
         for (int i = 0; i < 4; i++) {
@@ -341,10 +341,10 @@ struct CodecQ6 : public CodecBase {
       // Unpack q6 into fp16x8_t
       int32x4_t w;
       {
-        static uint constexpr kMask000F = 0x000F000F;
-        static uint constexpr kHalf2_1024 =
+        static unsigned int constexpr kMask000F = 0x000F000F;
+        static unsigned int constexpr kHalf2_1024 =
             0x64006400;  // {1024.0, 1024.0}, fp16x2_t
-        static uint constexpr kHalf2_1056 =
+        static unsigned int constexpr kHalf2_1056 =
             0xE420E420;  // {-1056.0, -1056.0}, fp16x2_t
 
 #pragma unroll
@@ -502,13 +502,13 @@ struct CodecQ8 : public CodecBase {
       // Unpack q8 into fp16x8_t
       int32x4_t w;
       {
-        static uint constexpr kMask00FF = 0x00FF00FF;
+        static unsigned int constexpr kMask00FF = 0x00FF00FF;
 
         // {1024.0, 1024.0}, fp16x2_t
-        static uint constexpr kHalf2_1024 = 0x64006400;
+        static unsigned int constexpr kHalf2_1024 = 0x64006400;
 
         // {-1152.0, -1152.0}, fp16x2_t
-        static uint constexpr kHalf2_1152 = 0xE480E480;
+        static unsigned int constexpr kHalf2_1152 = 0xE480E480;
 
 #pragma unroll
         for (int i = 0; i < 4; i++) {

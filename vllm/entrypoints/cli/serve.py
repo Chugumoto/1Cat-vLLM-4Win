@@ -5,8 +5,6 @@ import argparse
 import signal
 import time
 
-import uvloop
-
 import vllm
 import vllm.envs as envs
 from vllm.entrypoints.cli.types import CLISubcommand
@@ -18,6 +16,7 @@ from vllm.entrypoints.openai.dp_supervisor import (
 from vllm.entrypoints.utils import VLLM_SUBCMD_PARSER_EPILOG
 from vllm.logger import init_logger
 from vllm.usage.usage_lib import UsageContext
+from vllm.utils.uvloop_compat import uvloop_impl
 from vllm.utils.argparse_utils import FlexibleArgumentParser
 from vllm.utils.network_utils import get_tcp_uri
 from vllm.v1.engine.utils import CoreEngineProcManager, launch_core_engines
@@ -55,7 +54,7 @@ class ServeSubcommand(CLISubcommand):
         if getattr(args, "grpc", False):
             from vllm.entrypoints.grpc_server import serve_grpc
 
-            uvloop.run(serve_grpc(args))
+            uvloop_impl.run(serve_grpc(args))
             return
 
         if args.headless:
@@ -145,7 +144,7 @@ class ServeSubcommand(CLISubcommand):
         else:
             # Single API server (this process).
             args.api_server_count = None
-            uvloop.run(run_server(args))
+            uvloop_impl.run(run_server(args))
 
     def validate(self, args: argparse.Namespace) -> None:
         validate_parsed_serve_args(args)

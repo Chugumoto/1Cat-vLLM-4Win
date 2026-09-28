@@ -4145,12 +4145,12 @@ void launch_flash_attention_decode_paged(
     flash_attention_decode_partition_kernel<D, PARTITION_SIZE, KV_DTYPE,
                                             SEQ_LEN_ROUTE, kAnchored, PARTIAL_T>
         <<<partition_grid, block, 0, stream>>>(
-            reinterpret_cast<const __half*>(q.data_ptr<at::Half>()),
+            reinterpret_cast<const __half*>(q.template data_ptr<at::Half>()),
             k_cache.data_ptr(), v_cache.data_ptr(),
             reinterpret_cast<PARTIAL_T*>(tmp_out.data_ptr()),
-            max_logits.data_ptr<float>(), exp_sums.data_ptr<float>(),
-            block_table.data_ptr<int>(), seq_lens.data_ptr<int>(),
-            active_num_partitions.data_ptr<int>(), batch_size, max_num_blocks,
+            max_logits.template data_ptr<float>(), exp_sums.template data_ptr<float>(),
+            block_table.template data_ptr<int>(), seq_lens.template data_ptr<int>(),
+            active_num_partitions.template data_ptr<int>(), batch_size, max_num_blocks,
             max_num_partitions, num_heads_q, num_heads_kv, block_size,
             q.stride(0), q.stride(1), tmp_out.stride(0), tmp_out.stride(1),
             tmp_out.stride(2), max_logits.stride(0), max_logits.stride(1),
@@ -4180,9 +4180,9 @@ void launch_flash_attention_decode_paged(
                                        PARTIAL_T>
       <<<reduce_grid, block, reduce_shared_mem, stream>>>(
           reinterpret_cast<const PARTIAL_T*>(tmp_out.data_ptr()),
-          max_logits.data_ptr<float>(), exp_sums.data_ptr<float>(),
-          seq_lens.data_ptr<int>(), active_num_partitions.data_ptr<int>(),
-          reinterpret_cast<__half*>(out.data_ptr<at::Half>()), batch_size,
+          max_logits.template data_ptr<float>(), exp_sums.template data_ptr<float>(),
+          seq_lens.template data_ptr<int>(), active_num_partitions.template data_ptr<int>(),
+          reinterpret_cast<__half*>(out.template data_ptr<at::Half>()), batch_size,
           max_num_partitions, num_heads_q, tmp_out.stride(0), tmp_out.stride(1),
           tmp_out.stride(2), max_logits.stride(0), max_logits.stride(1),
           out.stride(0), out.stride(1), 0, 0, 0, 0);
@@ -4203,8 +4203,8 @@ void launch_flash_attention_decode_xqa_split_reduce(
       static_cast<size_t>(launch_num_partitions) * sizeof(float);
   flash_attention_decode_xqa_reduce_stats_kernel<PARTITION_SIZE, SEQ_LEN_ROUTE>
       <<<stats_grid, stats_block, stats_shared_mem, stream>>>(
-          max_logits.data_ptr<float>(), exp_sums.data_ptr<float>(),
-          seq_lens.data_ptr<int>(), batch_size, launch_num_partitions,
+          max_logits.template data_ptr<float>(), exp_sums.template data_ptr<float>(),
+          seq_lens.template data_ptr<int>(), batch_size, launch_num_partitions,
           num_heads_q, max_logits.stride(0), max_logits.stride(1),
           route_seq_len_begin, route_seq_len_end, route_seq_len_final);
   C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -4217,10 +4217,10 @@ void launch_flash_attention_decode_xqa_split_reduce(
     flash_attention_decode_xqa_reduce_output_kernel<256, PARTITION_SIZE,     \
                                                     D_TILE, SEQ_LEN_ROUTE>   \
         <<<output_grid, output_block, 0, stream>>>(                          \
-            reinterpret_cast<const __half*>(tmp_out.data_ptr<at::Half>()),   \
-            max_logits.data_ptr<float>(), exp_sums.data_ptr<float>(),        \
-            seq_lens.data_ptr<int>(),                                        \
-            reinterpret_cast<__half*>(out.data_ptr<at::Half>()), batch_size, \
+            reinterpret_cast<const __half*>(tmp_out.template data_ptr<at::Half>()),   \
+            max_logits.template data_ptr<float>(), exp_sums.template data_ptr<float>(),        \
+            seq_lens.template data_ptr<int>(),                                        \
+            reinterpret_cast<__half*>(out.template data_ptr<at::Half>()), batch_size, \
             launch_num_partitions, num_heads_q, tmp_out.stride(0),           \
             tmp_out.stride(1), tmp_out.stride(2), max_logits.stride(0),      \
             max_logits.stride(1), out.stride(0), out.stride(1),              \
@@ -4295,12 +4295,12 @@ void launch_flash_attention_decode_paged_xqa_tc_256_wide(
         ALIGNED_PADDED_SMEM, KV_DTYPE, SEQ_LEN_ROUTE, QK_SW_PIPELINE,          \
         PARTITION_PAGE_IDS, FP8_PAIR_LOAD, E4M3_SHARED_LUT>                    \
         <<<partition_grid, NUM_THREADS, shared_mem, stream>>>(                 \
-            reinterpret_cast<const __half*>(q.data_ptr<at::Half>()),           \
+            reinterpret_cast<const __half*>(q.template data_ptr<at::Half>()),           \
             k_cache.data_ptr(), v_cache.data_ptr(),                            \
-            reinterpret_cast<__half*>(tmp_out.data_ptr<at::Half>()),           \
-            max_logits.data_ptr<float>(), exp_sums.data_ptr<float>(),          \
-            block_table.data_ptr<int>(), seq_lens.data_ptr<int>(),             \
-            active_num_partitions.data_ptr<int>(), batch_size, max_num_blocks, \
+            reinterpret_cast<__half*>(tmp_out.template data_ptr<at::Half>()),           \
+            max_logits.template data_ptr<float>(), exp_sums.template data_ptr<float>(),          \
+            block_table.template data_ptr<int>(), seq_lens.template data_ptr<int>(),             \
+            active_num_partitions.template data_ptr<int>(), batch_size, max_num_blocks, \
             launch_num_partitions, num_heads_q, num_heads_kv, k_cache.size(1), \
             q.stride(0), q.stride(1), tmp_out.stride(0), tmp_out.stride(1),    \
             tmp_out.stride(2), max_logits.stride(0), max_logits.stride(1),     \
@@ -4350,10 +4350,10 @@ void launch_flash_attention_decode_paged_xqa_tc_256_wide(
         static_cast<size_t>(2 * launch_num_partitions) * sizeof(float);
     flash_attention_decode_reduce_kernel<256, PARTITION_SIZE, SEQ_LEN_ROUTE>
         <<<reduce_grid, block, reduce_shared_mem, stream>>>(
-            reinterpret_cast<const __half*>(tmp_out.data_ptr<at::Half>()),
-            max_logits.data_ptr<float>(), exp_sums.data_ptr<float>(),
-            seq_lens.data_ptr<int>(), active_num_partitions.data_ptr<int>(),
-            reinterpret_cast<__half*>(out.data_ptr<at::Half>()), batch_size,
+            reinterpret_cast<const __half*>(tmp_out.template data_ptr<at::Half>()),
+            max_logits.template data_ptr<float>(), exp_sums.template data_ptr<float>(),
+            seq_lens.template data_ptr<int>(), active_num_partitions.template data_ptr<int>(),
+            reinterpret_cast<__half*>(out.template data_ptr<at::Half>()), batch_size,
             launch_num_partitions, num_heads_q, tmp_out.stride(0),
             tmp_out.stride(1), tmp_out.stride(2), max_logits.stride(0),
             max_logits.stride(1), out.stride(0), out.stride(1),
@@ -4507,9 +4507,9 @@ void launch_flash_attention_decode_qk_scores(
 
   flash_attention_decode_qk_scores_kernel<D, PARTITION_SIZE, KV_DTYPE>
       <<<grid, block, 0, stream>>>(
-          reinterpret_cast<const __half*>(q.data_ptr<at::Half>()),
-          k_cache.data_ptr(), block_table.data_ptr<int>(),
-          seq_lens.data_ptr<int>(), scores.data_ptr<float>(), batch_size,
+          reinterpret_cast<const __half*>(q.template data_ptr<at::Half>()),
+          k_cache.data_ptr(), block_table.template data_ptr<int>(),
+          seq_lens.template data_ptr<int>(), scores.template data_ptr<float>(), batch_size,
           max_num_blocks, max_num_partitions, num_heads_q, num_heads_kv,
           block_size, q.stride(0), q.stride(1), scores.stride(0),
           scores.stride(1), scores.stride(2), k_cache.stride(0),

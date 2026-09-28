@@ -29,7 +29,7 @@ torch::stable::Tensor allspark_w8a16_gemm(
 namespace allspark {
 /*
  * GemmTile manage data movement from Global Memory to Shared Memory
- * requiring N % 8 == 0， K % 16 == 0 by loading uint
+ * requiring N % 8 == 0， K % 16 == 0 by loading unsigned int
  * BN is obtained by padding the original N to a multiple of 32
  * weight B is rearranged as N32K16 order,
  * i.e. a initial data block of size 32(n)x16(k) is reordered as n8k4n4k4，

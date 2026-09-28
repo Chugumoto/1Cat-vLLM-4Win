@@ -26,7 +26,7 @@ __device__ uint32_t read_u4(const uint32_t* address, uint32_t index)
 }
 
 template<int... Ds>
-__global__ void permute_u4(uint* dst, const uint* src, Array<int, sizeof...(Ds)> dims)
+__global__ void permute_u4(unsigned int* dst, const unsigned int* src, Array<int, sizeof...(Ds)> dims)
 {
     constexpr int N = sizeof...(Ds);
 
@@ -68,7 +68,7 @@ __global__ void permute_u4(uint* dst, const uint* src, Array<int, sizeof...(Ds)>
 void unpack_awq_gemm(uint4_t* dst, const uint4_t* src, int rows, int cols, cudaStream_t st)
 {
     Array<int, 4> shape{cols, rows / 8, 2, 4};
-    permute_u4<0, 1, 3, 2><<<512, 512, 0, st>>>((uint*)dst, (const uint*)src, shape);
+    permute_u4<0, 1, 3, 2><<<512, 512, 0, st>>>((unsigned int*)dst, (const unsigned int*)src, shape);
 }
 
 __global__ void transpose_u4_kernel(uint4_t* dst, const uint4_t* src, int s, int c)
@@ -104,7 +104,7 @@ void transpose_u4(uint4_t* dst, const uint4_t* src, int s, int c, cudaStream_t s
         return;
     }
     // Array<int, 2> shape{s, c};
-    // permute_u4<1, 0><<<512, 512, 0, st>>>((uint*)dst, (const uint*)src, shape);
+    // permute_u4<1, 0><<<512, 512, 0, st>>>((unsigned int*)dst, (const unsigned int*)src, shape);
 
     const dim3 block(16, 16);
     const dim3 grid((c + 15) / 16, (s + 15) / 16);

@@ -754,35 +754,35 @@ void dispatch_topk_launch(
       TORCH_CHECK(bias_tensor.dim() == 1, "bias tensor must be 1D");
       TORCH_CHECK(bias_tensor.size(0) == num_experts, "bias size mismatch, expected: ", num_experts);
       TORCH_CHECK(bias_tensor.is_contiguous(), "bias tensor must be contiguous");
-      bias_ptr = bias_tensor.data_ptr<float>();
+      bias_ptr = bias_tensor.template data_ptr<float>();
     }
 
     if (topk_indices.scalar_type() == at::ScalarType::Int) {
         vllm::moe::topkGatingKernelLauncher<int, ComputeType, SF>(
             reinterpret_cast<const ComputeType*>(gating_output.data_ptr()),
-            topk_weights.data_ptr<float>(),
-            topk_indices.data_ptr<int>(),
-            token_expert_indices.data_ptr<int>(),
-            softmax_workspace.data_ptr<float>(),
+            topk_weights.template data_ptr<float>(),
+            topk_indices.template data_ptr<int>(),
+            token_expert_indices.template data_ptr<int>(),
+            softmax_workspace.template data_ptr<float>(),
             num_tokens, num_experts, topk, renormalize,
             bias_ptr, stream);
     } else if (topk_indices.scalar_type() == at::ScalarType::UInt32) {
         vllm::moe::topkGatingKernelLauncher<uint32_t, ComputeType, SF>(
             reinterpret_cast<const ComputeType*>(gating_output.data_ptr()),
-            topk_weights.data_ptr<float>(),
-            topk_indices.data_ptr<uint32_t>(),
-            token_expert_indices.data_ptr<int>(),
-            softmax_workspace.data_ptr<float>(),
+            topk_weights.template data_ptr<float>(),
+            topk_indices.template data_ptr<uint32_t>(),
+            token_expert_indices.template data_ptr<int>(),
+            softmax_workspace.template data_ptr<float>(),
             num_tokens, num_experts, topk, renormalize,
             bias_ptr, stream);
     } else {
         TORCH_CHECK(topk_indices.scalar_type() == at::ScalarType::Long);
         vllm::moe::topkGatingKernelLauncher<int64_t, ComputeType, SF>(
             reinterpret_cast<const ComputeType*>(gating_output.data_ptr()),
-            topk_weights.data_ptr<float>(),
-            topk_indices.data_ptr<int64_t>(),
-            token_expert_indices.data_ptr<int>(),
-            softmax_workspace.data_ptr<float>(),
+            topk_weights.template data_ptr<float>(),
+            topk_indices.template data_ptr<int64_t>(),
+            token_expert_indices.template data_ptr<int>(),
+            softmax_workspace.template data_ptr<float>(),
             num_tokens, num_experts, topk, renormalize,
             bias_ptr, stream);
     }

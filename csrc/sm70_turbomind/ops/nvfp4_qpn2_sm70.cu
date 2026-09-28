@@ -695,11 +695,11 @@ void nvfp4_qpn2_gemm_sm70_impl(torch::Tensor out, torch::Tensor input,
 
   const at::cuda::OptionalCUDAGuard device_guard(device_of(input));
   const cudaStream_t stream = at::cuda::getCurrentCUDAStream();
-  const auto* code_ptr = codes.data_ptr<uint8_t>();
-  const auto* scale_ptr = scales.data_ptr<uint8_t>();
+  const auto* code_ptr = codes.template data_ptr<uint8_t>();
+  const auto* scale_ptr = scales.template data_ptr<uint8_t>();
   const auto* input_ptr =
-      reinterpret_cast<const half*>(input.data_ptr<at::Half>());
-  auto* output_ptr = reinterpret_cast<half*>(out.data_ptr<at::Half>());
+      reinterpret_cast<const half*>(input.template data_ptr<at::Half>());
+  auto* output_ptr = reinterpret_cast<half*>(out.template data_ptr<at::Half>());
   const int n = static_cast<int>(out.size(1));
   const int k = static_cast<int>(input.size(1));
   const int m = static_cast<int>(input.size(0));
@@ -717,7 +717,7 @@ void nvfp4_qpn2_gemm_sm70_impl(torch::Tensor out, torch::Tensor input,
         split_k == 16 && accumulator_chains == 2) {
       auto packed_input = torch::empty_like(input);
       auto* packed_ptr =
-          reinterpret_cast<half*>(packed_input.data_ptr<at::Half>());
+          reinterpret_cast<half*>(packed_input.template data_ptr<at::Half>());
       constexpr int kThreads = 256;
       vllm::sm70::pack_k16_input<<<
           (input.numel() / 2 + kThreads - 1) / kThreads, kThreads, 0, stream>>>(
@@ -777,11 +777,11 @@ void nvfp4_qpn2_gated_sm70_impl(torch::Tensor out, torch::Tensor input,
 
   const at::cuda::OptionalCUDAGuard device_guard(device_of(input));
   const cudaStream_t stream = at::cuda::getCurrentCUDAStream();
-  const auto* code_ptr = codes.data_ptr<uint8_t>();
-  const auto* scale_ptr = scales.data_ptr<uint8_t>();
+  const auto* code_ptr = codes.template data_ptr<uint8_t>();
+  const auto* scale_ptr = scales.template data_ptr<uint8_t>();
   const auto* input_ptr =
-      reinterpret_cast<const half*>(input.data_ptr<at::Half>());
-  auto* output_ptr = reinterpret_cast<half*>(out.data_ptr<at::Half>());
+      reinterpret_cast<const half*>(input.template data_ptr<at::Half>());
+  auto* output_ptr = reinterpret_cast<half*>(out.template data_ptr<at::Half>());
   const int hidden = static_cast<int>(out.size(1));
   const int k = static_cast<int>(input.size(1));
   const int m = static_cast<int>(input.size(0));
@@ -799,7 +799,7 @@ void nvfp4_qpn2_gated_sm70_impl(torch::Tensor out, torch::Tensor input,
         split_k == 8 && accumulator_chains == 2) {
       auto packed_input = torch::empty_like(input);
       auto* packed_ptr =
-          reinterpret_cast<half*>(packed_input.data_ptr<at::Half>());
+          reinterpret_cast<half*>(packed_input.template data_ptr<at::Half>());
       constexpr int kThreads = 256;
       vllm::sm70::pack_k16_input<<<
           (input.numel() / 2 + kThreads - 1) / kThreads, kThreads, 0, stream>>>(

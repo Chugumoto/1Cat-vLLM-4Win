@@ -6,6 +6,7 @@ import importlib.util
 import json
 import logging
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -66,6 +67,7 @@ USE_PRECOMPILED_EXTENSIONS = envs.VLLM_USE_PRECOMPILED
 USE_PRECOMPILED_RUST_FRONTEND = (
     envs.VLLM_USE_PRECOMPILED or envs.VLLM_USE_PRECOMPILED_RUST
 )
+IS_WINDOWS = platform.system() == "Windows"
 
 
 def should_require_rust_frontend() -> bool:
@@ -76,9 +78,13 @@ def should_require_rust_frontend() -> bool:
 if sys.platform.startswith("darwin") and VLLM_TARGET_DEVICE != "cpu":
     logger.warning("VLLM_TARGET_DEVICE automatically set to `cpu` due to macOS")
     VLLM_TARGET_DEVICE = "cpu"
-elif not (sys.platform.startswith("linux") or sys.platform.startswith("darwin")):
+elif not (
+    sys.platform.startswith("linux")
+    or sys.platform.startswith("darwin")
+    or IS_WINDOWS
+):
     logger.warning(
-        "vLLM only supports Linux platform (including WSL) and MacOS."
+        "vLLM only supports Linux platform (including WSL), Windows and MacOS."
         "Building on %s, "
         "so vLLM may not be able to run correctly",
         sys.platform,
@@ -96,6 +102,16 @@ elif sys.platform.startswith("linux") and os.getenv("VLLM_TARGET_DEVICE") is Non
         logger.info("Auto-detected CUDA")
     else:
         VLLM_TARGET_DEVICE = "cpu"
+
+IS_WSL = (
+    "microsoft-standard-WSL2" in platform.uname().release
+    or "-Microsoft" in platform.uname().release
+)
+
+if (IS_WINDOWS or IS_WSL) and (
+    os.environ.get("VLLM_FORCE_FA3_WINDOWS_BUILD", "0") != "1"
+):
+    os.environ["VLLM_DISABLE_FA3_BUILD"] = "1"
 
 
 def is_sccache_available() -> bool:
@@ -239,8 +255,11 @@ def bundle_flash_qla_sm70(build_lib: str, build_temp: str) -> None:
         return
 
     src = FLASH_QLA_SM70_ROOT / "csrc" / "gdn_forward.cu"
+    api_src = FLASH_QLA_SM70_ROOT / "csrc" / "gdn_api.cpp"
     if not src.exists():
         raise RuntimeError(f"SM70 FlashQLA source is missing: {src}")
+    if not api_src.exists():
+        raise RuntimeError(f"SM70 FlashQLA API source is missing: {api_src}")
 
     from torch.utils.cpp_extension import load as load_torch_extension
 
@@ -248,16 +267,23 @@ def bundle_flash_qla_sm70(build_lib: str, build_temp: str) -> None:
     extension_build_dir.mkdir(parents=True, exist_ok=True)
     previous_arch_list = os.environ.get("TORCH_CUDA_ARCH_LIST")
     os.environ["TORCH_CUDA_ARCH_LIST"] = "7.0"
+    cuda_flags = [
+        "-gencode=arch=compute_70,code=sm_70",
+    ]
+    cxx_flags: list[str] = []
+    if IS_WINDOWS:
+        cuda_flags.extend(["-Xcompiler=/O2", "-Xcompiler=/Zc:__cplusplus"])
+        cxx_flags.append("/O2")
+    else:
+        cuda_flags.append("-O3")
+        cxx_flags.append("-O3")
     try:
         extension = load_torch_extension(
             name="flash_qla_sm70_gdn_strided",
-            sources=[str(src)],
+            sources=[str(src), str(api_src)],
             build_directory=str(extension_build_dir),
-            extra_cuda_cflags=[
-                "-O3",
-                "-gencode=arch=compute_70,code=sm_70",
-            ],
-            extra_cflags=["-O3"],
+            extra_cuda_cflags=cuda_flags,
+            extra_cflags=cxx_flags,
             with_cuda=True,
             verbose=bool(int(os.environ.get("FLASH_QLA_SM70_VERBOSE_BUILD", "0"))),
         )
@@ -278,6 +304,9 @@ def bundle_flash_qla_sm70(build_lib: str, build_temp: str) -> None:
 
 
 def remove_rpath(path: Path) -> None:
+    if IS_WINDOWS:
+        return
+
     patchelf = which("patchelf")
     if patchelf is None:
         raise RuntimeError(
@@ -382,11 +411,19 @@ class cmake_build_ext(build_ext):
 
         # Pass the python executable to cmake so it can find an exact
         # match.
-        cmake_args += ["-DVLLM_PYTHON_EXECUTABLE={}".format(sys.executable)]
+        python_exec_path = sys.executable
+        if IS_WINDOWS:
+            python_exec_path = python_exec_path.replace("\\", "/")
+        cmake_args += ["-DVLLM_PYTHON_EXECUTABLE={}".format(python_exec_path)]
 
         # Pass the python path to cmake so it can reuse the build dependencies
         # on subsequent calls to python.
-        cmake_args += ["-DVLLM_PYTHON_PATH={}".format(":".join(sys.path))]
+        python_path = (
+            ":".join(path.replace("\\", "/") for path in sys.path)
+            if IS_WINDOWS
+            else ":".join(sys.path)
+        )
+        cmake_args += ["-DVLLM_PYTHON_PATH={}".format(python_path)]
 
         # Override the base directory for FetchContent downloads to $ROOT/.deps
         # This allows sharing dependencies between profiles,
@@ -415,7 +452,13 @@ class cmake_build_ext(build_ext):
             build_tool = []
         # Make sure we use the nvcc from CUDA_HOME
         if _is_cuda() and CUDA_HOME is not None:
-            cmake_args += [f"-DCMAKE_CUDA_COMPILER={CUDA_HOME}/bin/nvcc"]
+            if IS_WINDOWS:
+                cuda_home = CUDA_HOME.replace("\\", "/")
+                cmake_args += [
+                    f"-DCMAKE_CUDA_COMPILER={cuda_home}/bin/nvcc.exe"
+                ]
+            else:
+                cmake_args += [f"-DCMAKE_CUDA_COMPILER={CUDA_HOME}/bin/nvcc"]
         elif _is_hip() and ROCM_HOME is not None:
             cmake_args += [f"-DROCM_PATH={ROCM_HOME}"]
 
@@ -1228,6 +1271,10 @@ def get_requirements() -> list[str]:
         requirements = _read_requirements("xpu.txt")
     else:
         raise ValueError("Unsupported platform, please use CUDA, ROCm, or CPU.")
+
+    if IS_WINDOWS:
+        requirements.extend(_read_requirements("windows.txt"))
+
     return requirements
 
 

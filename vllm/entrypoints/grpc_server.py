@@ -39,7 +39,7 @@ except ImportError as e:
         "version mismatch — see the chained exception above for details."
     ) from e
 
-import uvloop
+from vllm.utils.uvloop_compat import uvloop_impl
 
 from vllm import envs
 from vllm.engine.arg_utils import AsyncEngineArgs
@@ -190,7 +190,7 @@ def main():
 
     # Run server
     try:
-        uvloop.run(serve_grpc(args))
+        uvloop_impl.run(serve_grpc(args))
     except Exception as e:
         logger.exception("Server failed: %s", e)
         sys.exit(1)

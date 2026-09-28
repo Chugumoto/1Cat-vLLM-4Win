@@ -24,8 +24,8 @@ inline __device__ void _Ld(Array<T, N>& dst, const T* src) {
     (uint4&)dst = __ldcs((const uint4*)src);
   } else if constexpr (sizeof(Array<T, N>) == sizeof(uint2)) {
     (uint2&)dst = __ldcs((const uint2*)src);
-  } else if constexpr (sizeof(Array<T, N>) == sizeof(uint)) {
-    (uint&)dst = __ldcs((const uint*)src);
+  } else if constexpr (sizeof(Array<T, N>) == sizeof(unsigned int)) {
+    (unsigned int&)dst = __ldcs((const unsigned int*)src);
   } else {
     static_assert(!std::is_same_v<T, T>);
   }

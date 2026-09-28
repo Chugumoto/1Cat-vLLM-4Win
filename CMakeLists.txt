@@ -97,6 +97,16 @@ endif()
 #
 find_package(Torch REQUIRED)
 
+# Linux ships libtorch_python.so; Windows ships torch_python.lib/.dll.
+find_library(TORCH_PYTHON_LIB torch_python
+  PATHS "${TORCH_INSTALL_PREFIX}/lib" NO_DEFAULT_PATH)
+if(NOT TORCH_PYTHON_LIB)
+  message(FATAL_ERROR
+    "torch_python library not found under ${TORCH_INSTALL_PREFIX}/lib "
+    "(needed by SM70 pybind extensions)")
+endif()
+message(STATUS "Found torch_python: ${TORCH_PYTHON_LIB}")
+
 # Supported NVIDIA architectures.
 # This check must happen after find_package(Torch) because that's when CMAKE_CUDA_COMPILER_VERSION gets defined
 if(DEFINED CMAKE_CUDA_COMPILER_VERSION AND
@@ -229,9 +239,10 @@ endif()
 # Set CUDA include flags for CXX compiler.
 #
 if(VLLM_GPU_LANG STREQUAL "CUDA")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CUDA_TOOLKIT_ROOT_DIR}/include")
+  # Quote -I paths: default CUDA Toolkit install lives under "Program Files".
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \"-I${CUDA_TOOLKIT_ROOT_DIR}/include\"")
   if(CUDA_VERSION VERSION_GREATER_EQUAL 13.0)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CUDA_TOOLKIT_ROOT_DIR}/include/cccl")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \"-I${CUDA_TOOLKIT_ROOT_DIR}/include/cccl\"")
   endif()
 endif()
 
@@ -328,6 +339,32 @@ if(VLLM_GPU_LANG STREQUAL "CUDA")
   # Set CUTLASS_REVISION. Used for FetchContent. Also fixes some bogus messages when building.
   set(CUTLASS_REVISION "v4.4.2")
 
+  if (WIN32)
+    set(CUTLASS_ENABLE_CUBLAS ON CACHE BOOL "cuBLAS enabled for Cutlass")
+    set(CUBLAS_ENABLED ON CACHE BOOL "cuBLAS enabled")
+    list(APPEND VLLM_GPU_FLAGS "--disable-warnings")
+    list(APPEND VLLM_GPU_FLAGS "-O2")
+    list(APPEND VLLM_GPU_FLAGS "-FS")
+    list(APPEND VLLM_GPU_FLAGS "-Xptxas=-O2")
+    list(APPEND VLLM_GPU_FLAGS "-Xcompiler=/O2")
+    list(APPEND VLLM_GPU_FLAGS "-Xcompiler=/FS")
+    list(APPEND VLLM_GPU_FLAGS "-Xcompiler=/Z7")
+    list(APPEND VLLM_GPU_FLAGS "-Xcompiler=/Zc:__cplusplus")
+    list(APPEND VLLM_GPU_FLAGS "-Xcompiler=/Zc:preprocessor")
+    list(APPEND VLLM_GPU_FLAGS "-Xcompiler=/DWIN32_LEAN_AND_MEAN")
+    list(APPEND VLLM_GPU_FLAGS "-Xcompiler=/DUSE_CUDA")
+    string(REPLACE "/Zi" "/Z7" VLLM_GPU_FLAGS "${VLLM_GPU_FLAGS}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus /Zc:preprocessor /DWIN32_LEAN_AND_MEAN")
+    set(CMAKE_CUDA_FLAGS_DEBUG "")
+    include_directories("${CMAKE_CURRENT_SOURCE_DIR}/csrc")
+  endif()
+
   # Use the specified CUTLASS source directory for compilation if VLLM_CUTLASS_SRC_DIR is provided
   if (DEFINED ENV{VLLM_CUTLASS_SRC_DIR})
     set(VLLM_CUTLASS_SRC_DIR $ENV{VLLM_CUTLASS_SRC_DIR})
@@ -354,6 +391,12 @@ if(VLLM_GPU_LANG STREQUAL "CUDA")
     )
   endif()
   FetchContent_MakeAvailable(cutlass)
+
+  if (WIN32)
+    find_package(PythonInterp)
+    find_package(Python)
+    execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/fix_cutlass_msvc.py ${cutlass_SOURCE_DIR})
+  endif()
 
   list(APPEND VLLM_EXT_SRC
     "csrc/cutlass_extensions/common.cpp")
@@ -709,6 +752,17 @@ define_extension_target(
   USE_SABI 3
   WITH_SOABI)
 
+# SM70 glm53 path calls cuBLASLt APIs; Windows needs an explicit import lib.
+if(WIN32)
+  if(TARGET CUDA::cublasLt)
+    target_link_libraries(_C PRIVATE CUDA::cublas CUDA::cublasLt)
+  else()
+    target_link_libraries(_C PRIVATE
+      "${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cublas.lib"
+      "${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cublasLt.lib")
+  endif()
+endif()
+
 # If CUTLASS is compiled on NVCC >= 12.5, it by default uses
 # cudaGetDriverEntryPointByVersion as a wrapper to avoid directly calling the
 # driver API. This causes problems when linking with earlier versions of CUDA.
@@ -752,8 +806,7 @@ if(VLLM_GPU_LANG STREQUAL "CUDA" AND SM70_TURBOMIND_ARCHS)
   target_compile_options(_sm70_sampler_C PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-UNDEBUG>
     $<$<COMPILE_LANGUAGE:CUDA>:-UNDEBUG;-lineinfo>)
-  target_link_libraries(_sm70_sampler_C PRIVATE
-    "${TORCH_INSTALL_PREFIX}/lib/libtorch_python.so")
+  target_link_libraries(_sm70_sampler_C PRIVATE "${TORCH_PYTHON_LIB}")
 
   # Native H3 kernels use ordinary Torch/Python ABI and remain independent of
   # the existing primary SM70 extension's registrations.
@@ -762,7 +815,7 @@ if(VLLM_GPU_LANG STREQUAL "CUDA" AND SM70_TURBOMIND_ARCHS)
     SOURCES "csrc/sm70_turbomind/ops/h3_w8a16.cu"
     COMPILE_FLAGS ${VLLM_GPU_FLAGS}
     ARCHITECTURES "70"
-    LIBRARIES CUDA::cublas CUDA::cublasLt "${TORCH_INSTALL_PREFIX}/lib/libtorch_python.so"
+    LIBRARIES CUDA::cublas CUDA::cublasLt "${TORCH_PYTHON_LIB}"
     WITH_SOABI)
   define_extension_target(
     _h3_flashinfer_C DESTINATION vllm LANGUAGE CUDA
@@ -770,7 +823,7 @@ if(VLLM_GPU_LANG STREQUAL "CUDA" AND SM70_TURBOMIND_ARCHS)
     INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/flashinfer-sm70/include"
     COMPILE_FLAGS ${VLLM_GPU_FLAGS}
     ARCHITECTURES "70"
-    LIBRARIES "${TORCH_INSTALL_PREFIX}/lib/libtorch_python.so"
+    LIBRARIES "${TORCH_PYTHON_LIB}"
     WITH_SOABI)
   define_extension_target(
     _h3_flashattn_C DESTINATION vllm LANGUAGE CUDA
@@ -780,14 +833,14 @@ if(VLLM_GPU_LANG STREQUAL "CUDA" AND SM70_TURBOMIND_ARCHS)
       "${cutlass_SOURCE_DIR}/examples/41_fused_multi_head_attention"
     COMPILE_FLAGS ${VLLM_GPU_FLAGS}
     ARCHITECTURES "70"
-    LIBRARIES "${TORCH_INSTALL_PREFIX}/lib/libtorch_python.so"
+    LIBRARIES "${TORCH_PYTHON_LIB}"
     WITH_SOABI)
   define_extension_target(
     _sm70_exact_reduce_C DESTINATION vllm LANGUAGE CUDA
     SOURCES "csrc/sm70_turbomind/ops/exact_row_reduce.cu"
     COMPILE_FLAGS ${VLLM_GPU_FLAGS} "--fmad=false"
     ARCHITECTURES "70"
-    LIBRARIES "${TORCH_INSTALL_PREFIX}/lib/libtorch_python.so"
+    LIBRARIES "${TORCH_PYTHON_LIB}"
     WITH_SOABI)
   define_extension_target(
     _sm70_sparse_attention_C DESTINATION vllm LANGUAGE CUDA
@@ -797,7 +850,7 @@ if(VLLM_GPU_LANG STREQUAL "CUDA" AND SM70_TURBOMIND_ARCHS)
       "${cutlass_SOURCE_DIR}/examples/41_fused_multi_head_attention"
     COMPILE_FLAGS ${VLLM_GPU_FLAGS}
     ARCHITECTURES "70"
-    LIBRARIES "${TORCH_INSTALL_PREFIX}/lib/libtorch_python.so"
+    LIBRARIES "${TORCH_PYTHON_LIB}"
     WITH_SOABI)
 endif()
 
@@ -1240,6 +1293,17 @@ if(VLLM_GPU_LANG STREQUAL "CUDA" OR VLLM_GPU_LANG STREQUAL "HIP")
   target_compile_definitions(_C_stable_libtorch PRIVATE
     TORCH_TARGET_VERSION=0x020A000000000000ULL)
 
+  # GPTQ/AWQ paths call cuBLAS (e.g. cublasHgemm); Windows needs the import lib.
+  if(WIN32)
+    if(TARGET CUDA::cublas)
+      target_link_libraries(_C_stable_libtorch PRIVATE CUDA::cublas CUDA::cublasLt)
+    else()
+      target_link_libraries(_C_stable_libtorch PRIVATE
+        "${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cublas.lib"
+        "${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cublasLt.lib")
+    endif()
+  endif()
+
   # Needed to use cuda/hip APIs from C-shim
   if(VLLM_GPU_LANG STREQUAL "CUDA")
     target_compile_definitions(_C_stable_libtorch PRIVATE USE_CUDA)
@@ -1474,6 +1538,16 @@ define_extension_target(
   INCLUDE_DIRECTORIES ${CUTLASS_TOOLS_UTIL_INCLUDE_DIR}
   USE_SABI 3
   WITH_SOABI)
+
+if(WIN32)
+  if(TARGET CUDA::cublas)
+    target_link_libraries(_moe_C PRIVATE CUDA::cublas CUDA::cublasLt)
+  else()
+    target_link_libraries(_moe_C PRIVATE
+      "${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cublas.lib"
+      "${CUDA_TOOLKIT_ROOT_DIR}/lib/x64/cublasLt.lib")
+  endif()
+endif()
 
 if(VLLM_GPU_LANG STREQUAL "HIP")
   #
