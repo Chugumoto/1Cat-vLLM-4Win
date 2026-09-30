@@ -179,6 +179,7 @@ First MTP-2 green (floor=0): **64.526** tok/s — `perf_qwen36_35b_a3b_awq_20260
 - Soft floor **Nmtp1nv**: **42** (= `floor(0.7 × 60.559)`)
 - Soft floor **Nmtp4nv**: **48** (= `floor(0.7 × 69.242)`)
 - Local weights (if Hub/Xet stalls): curl into `%USERPROFILE%\.cache\huggingface\hub\models--nvidia--Qwen3.6-35B-A3B-NVFP4\manual` via `scripts\windows\_prefetch_35b_nvfp4_curl.cmd`
+- Interactive chat server (not smoke): `scripts\windows\start-Qwen3.6-35B-A3B-NVFP4.cmd` — see **Download & serve models** in [README.windows.md](../../README.windows.md)
 
 #### Baseline
 

@@ -68,6 +68,59 @@ scripts\windows\smoke_quality_matrix.cmd
 
 ---
 
+## Download & serve models (1× V100)
+
+Use this when you want a **chat / Hermes / Codex** server (not the smoke-perf harness). Full gate details: [docs/windows/PERF_GATE.md](docs/windows/PERF_GATE.md).
+
+### 1. Install runtime (wheels or local build)
+
+Either build (`scripts\windows\run_build_mvp.cmd`) or install release wheels from [v1.5.0.1w](https://github.com/Chugumoto/1Cat-vLLM-4Win/releases/tag/v1.5.0.1w) into Python 3.12 + Torch 2.10+cu128.
+
+### 2. Prefetch weights
+
+Prefer `HF_HUB_DISABLE_XET=1`. Large ModelOpt NVFP4 repos often hang on Hub/Xet — use the **curl** prefetch scripts (resume-friendly).
+
+| Model | Prefetch | Local path (after curl) |
+|---|---|---|
+| `nvidia/Qwen3.6-35B-A3B-NVFP4` | `scripts\windows\_prefetch_35b_nvfp4_curl.cmd` | `%USERPROFILE%\.cache\huggingface\hub\models--nvidia--Qwen3.6-35B-A3B-NVFP4\manual` |
+| `QuantTrio/Qwen3.6-35B-A3B-AWQ` | Hub `snapshot_download` / smoke script auto-pull | HF cache under `models--QuantTrio--...` |
+| `QuantTrio/Qwen3.6-27B-AWQ` | same | HF cache |
+| `QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4` | Hub / smoke | HF cache |
+| `Qwen/Qwen2.5-Coder-32B-Instruct-AWQ` | `scripts\windows\_prefetch_qwen25_coder_32b_awq_curl.cmd` | `...\models--Qwen--Qwen2.5-Coder-32B-Instruct-AWQ\manual` |
+| `drawais/Qwen2.5-Coder-32B-Instruct-NVFP4` | `scripts\windows\_prefetch_qwen25_coder_32b_nvfp4_curl.cmd` | `...\models--drawais--...\manual` |
+
+For 35B NVFP4: if `config.json` / tokenizer files are missing after the curl shard download, copy them from a Hub snapshot under the same `models--nvidia--Qwen3.6-35B-A3B-NVFP4\` tree (the prefetch script does this when a snapshot already exists).
+
+### 3. Serve (interactive)
+
+Best measured decode here (~97 tok/s baseline):
+
+```bat
+scripts\windows\start-Qwen3.6-35B-A3B-NVFP4.cmd
+```
+
+What that script does:
+
+- `cd %TEMP%` before `python -m vllm...` (avoids Windows locking `vllm\_C.pyd` when cwd is the repo)
+- `VLLM_SM70_GDN_DECODE_FLASHQLA=0` and `--gdn-prefill-backend triton` (avoids tilelang/TVM WinError 127 on GDN)
+- `--served-model-name qwen36-35b-nvfp4` — **clients must use this id**, not the HF path
+- `--host 127.0.0.1 --port 8005`, `--max-model-len 262144`, tools: `--enable-auto-tool-choice --tool-call-parser qwen3_xml`
+
+Quick API check (PowerShell):
+
+```powershell
+curl.exe http://127.0.0.1:8005/v1/models
+curl.exe http://127.0.0.1:8005/v1/chat/completions -H "Content-Type: application/json" -d "{\"model\":\"qwen36-35b-nvfp4\",\"messages\":[{\"role\":\"user\",\"content\":\"ping\"}],\"max_tokens\":64}"
+```
+
+Hermes / Codex: set model to `qwen36-35b-nvfp4` and base URL `http://127.0.0.1:8005/v1`.
+
+### 4. Perf / quality gates (automated)
+
+Same models via `scripts\windows\smoke_perf_*.cmd` — see table above and PERF_GATE.md. Those scripts manage start/teardown and write JSON under `docs/windows/perf_results/`.
+
+---
+
 ## Hard pins
 
 | Component | Required | Notes |
@@ -128,6 +181,8 @@ Expected: `PREFLIGHT OK` · `SMOKE IMPORTS OK` · `SMOKE SERVE OK`.
 | `scripts/windows/preflight_env.py` | Contract checks |
 | `scripts/windows/run_build_mvp.cmd` | Full MVP build driver |
 | `scripts/windows/smoke_*.{cmd,ps1}` | Serve / perf / quality gates |
+| `scripts/windows/_prefetch_*_curl.cmd` | Curl weight download (Hub/Xet workaround) |
+| `scripts/windows/start-Qwen3.6-35B-A3B-NVFP4.cmd` | Interactive serve for 35B NVFP4 (port 8005) |
 | `docs/windows/PERF_GATE.md` | Full gate runbook + floors |
 | `docs/windows/perf_results/` | JSON/log artifacts |
 | `docs/windows/INVENTORY.md` | Port checklist vs vllm-windows |
