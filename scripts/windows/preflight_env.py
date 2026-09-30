@@ -1,4 +1,5 @@
 """Fail closed unless Windows V100 MVP stack is present."""
+
 from __future__ import annotations
 
 import platform
@@ -32,10 +33,9 @@ def main() -> int:
         errors.append("torch.cuda.is_available() is False")
     else:
         name = torch.cuda.get_device_name(0)
-        if "V100" not in name.upper() and "TESLA V100" not in name.upper():
-            # Allow substring V100 in common names like "Tesla V100-SXM2-16GB"
-            if "V100" not in name:
-                errors.append(f"GPU0 must be Tesla V100 for MVP smoke, got {name!r}")
+        # Common names look like "Tesla V100-SXM2-16GB".
+        if "V100" not in name.upper():
+            errors.append(f"GPU0 must be Tesla V100 for MVP smoke, got {name!r}")
 
         major, minor = torch.cuda.get_device_capability(0)
         if (major, minor) != (7, 0):

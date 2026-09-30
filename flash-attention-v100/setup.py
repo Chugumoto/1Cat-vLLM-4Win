@@ -153,7 +153,8 @@ def get_cmdclass():
                 )
             if parse(torch.version.cuda).major >= 13:
                 raise RuntimeError(
-                    f"Refusing Torch CUDA {torch.version.cuda}: Volta/SM70 needs CUDA 12.x."
+                    f"Refusing Torch CUDA {torch.version.cuda}: "
+                    "Volta/SM70 needs CUDA 12.x."
                 )
             super().build_extensions()
 
